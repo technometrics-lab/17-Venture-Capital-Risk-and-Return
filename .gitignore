@@ -4,3 +4,4 @@ data/crunchbase/
 .DS_Store
 ../.idea/
 ../.DS_Store
+/src/vcanalysis.egg-info/
