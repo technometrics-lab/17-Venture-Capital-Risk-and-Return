@@ -1,8 +1,9 @@
-from scipy.optimize import minimize
 from numpy import diag, array, sqrt
 from pandas import DataFrame
-from src.scripts.utils import transform_params
+from scipy.optimize import minimize
+
 from src.scripts.findlkh import find_likelyhood
+from src.scripts.utils import transform_params
 
 
 class Model:

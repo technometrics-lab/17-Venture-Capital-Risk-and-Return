@@ -1,8 +1,9 @@
-import yfinance
-import dotenv
-import requests
 import json
+
+import dotenv
 import pandas as pd
+import requests
+import yfinance
 
 
 def get_fred_time_series(series_id: str, start: str = None, end: str = None, freq: str = None) -> pd.DataFrame:
