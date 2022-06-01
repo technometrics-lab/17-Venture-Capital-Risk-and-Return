@@ -6,12 +6,17 @@ import requests
 import yfinance
 
 
-def get_fred_time_series(series_id: str, start: str = None, end: str = None, freq: str = None) -> pd.DataFrame:
+def get_fred_time_series(series_id: str, start=None, end=None, freq: str = None) -> pd.DataFrame:
     fred_api_key = dotenv.get_key('./.env', "FRED_API_KEY")
     freqs = ['d', 'w', 'bw', 'm', 'q', 'sa', 'a', 'wef', 'weth',
              'wew', 'wetu', 'wem', 'wesu', 'wesa', 'bwew', 'bwem']
     url = (f'https://api.stlouisfed.org/fred/series/observations?'
            f'series_id={series_id}&api_key={fred_api_key}&file_type=json')
+
+    if isinstance(start, int):
+        start = str(start) + '-01-01'
+    if isinstance(end, int):
+        end = str(end) + '-12-31'
 
     if start is not None:
         url += f'&observation_start={start}'
@@ -32,7 +37,12 @@ def get_fred_time_series(series_id: str, start: str = None, end: str = None, fre
     return pd.DataFrame({'date': pd.to_datetime(dates), series_id: values}).set_index('date')
 
 
-def get_yfinance_time_series(ticker: str, start: str = None, end: str = None, freq: str = None) -> pd.DataFrame:
+def get_yfinance_time_series(ticker: str, start=None, end=None, freq: str = None) -> pd.DataFrame:
+    if isinstance(start, int):
+        start = str(start) + '-01-01'
+    if isinstance(end, int):
+        end = str(end) + '-12-31'
+
     data = yfinance.download(ticker, start=start, end=end, interval=freq, progress=False)['Adj Close']
     data = data.to_frame()
     data.index.name = 'date'

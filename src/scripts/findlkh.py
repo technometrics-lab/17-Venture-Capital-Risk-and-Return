@@ -1,13 +1,13 @@
-import math
-
 import numpy as np
-
-from src.scripts.sim import sim
+import math
 from src.scripts.utils import *
+from src.scripts.sim import sim
 
 
 def find_likelyhood(tpars, x, xc, logrf, logmk, minage, c, d, logv, mask,
                     stockidx, dok, start_year=1987, sample_size=54):
+    debug = False
+
     xlo = transform_params(-1, -10, 0.1, 0.01, 0.1, 0.1, 1e-6, mask)
     xhi = transform_params(1, 10, 5, 1.5, 10, 10, 1 - 1e-6, mask)
 
@@ -27,7 +27,7 @@ def find_likelyhood(tpars, x, xc, logrf, logmk, minage, c, d, logv, mask,
             msigma = sigma.mean()
             gamma = (-log(exp(delta * (mlogmk - mlogrf) + 0.5 * (delta * msigma) ** 2 + 0.5 * sigma ** 2)
                           * (1 + (exp(delta * msigma ** 2) - 1) * (exp(-(mlogmk - mlogrf) - 0.5 * msigma ** 2) - 1)
-                          / (exp(msigma ** 2) - 1))))
+                             / (exp(msigma ** 2) - 1))))
         else:
             assert False, 'find_likelyhood ERROR: trying to impose alpha = 0 for model other than SP500 or no stock.'
 
@@ -37,38 +37,40 @@ def find_likelyhood(tpars, x, xc, logrf, logmk, minage, c, d, logv, mask,
         print('better to raise penalty in find_likelyhood so that the likelyhood function is continuous')
         return np.inf
 
-    begdatinx = 0
-    sim_params = [gamma, delta, sigma, k, a, b, c, d, pim, begdatinx, logrf, logmk, logv, stockidx, dok, 0]
+    quarter_index = -1
+    sim_params = [gamma, delta, sigma, k, a, b, c, d, pim, quarter_index, logrf, logmk, logv, stockidx, dok, 0, sample_size]
     if not stockidx:
         prob_pvt, prob_ipo_obs, prob_ipo_hid, prob_bkp_obs, prob_bkp_hid = sim(*sim_params)
 
     lk = 0
     for il in range(x.shape[0]):
-        newbeg = to_decimal_date(x[il, 3])
-        outdat = x[il, 6]
+        if debug: print(f"type: {xc[il]}")
+        round_date = to_decimal_date(x[il, 3])
+        exit_date = to_decimal_date(x[il, 6]) if x[il, 6] != -99 else x[il, 6]
         # should be the quarter in which this project starts
-        newbeginx = math.floor((newbeg - start_year) * 4) + 1
+        round_index = math.floor((round_date - start_year) * 4)
         # if this observation has a new begin date, do sim again
-        if newbeginx != begdatinx:
+        if round_index != quarter_index:
             if stockidx > 0:  # version with stock index
-                sim_params[9] = newbeginx
+                sim_params[9] = round_index
                 prob_pvt, prob_ipo_obs, prob_ipo_hid, prob_bkp_obs, prob_bkp_hid = sim(*sim_params)
-            begdatinx = newbeginx
+            quarter_index = round_index
 
         # ipo/acq with good date and return data/cochrane_test_files
         if xc[il] == 1:
             # quarter of exit with 1987:1 = 1 - start
-            ageindx = math.floor((to_decimal_date(outdat) - start_year) * 4) - begdatinx
+            exit_index = math.floor((exit_date - start_year) * 4) - quarter_index - 1
             # xcase tested to make sure no zeros. doit3 changed zero returns to out of business.
             logV = log(x[il, 9])
             # find nearest value gridpoint
             logVindx = np.argmin(np.abs(logV - logv))
-
-            if ageindx + 1 <= minage * 4:  # treat dates less than minage as "on or before"
+            if debug: print("round date: {}\nexit date: {}\nquarter index: {}\nexit index: {}\nround index: {}\n"
+                            .format(x[il, 3], x[il, 6], quarter_index, exit_index, round_index))
+            if exit_index + 1 <= minage * 4:  # treat dates less than minage as "on or before"
                 # at end of sample can't do minage*4
                 newprob = sum(prob_ipo_obs[:int(min(minage * 4, prob_ipo_obs.shape[0])), logVindx])
             else:
-                newprob = prob_ipo_obs[ageindx, logVindx]
+                newprob = prob_ipo_obs[exit_index, logVindx]
 
             if newprob > 0:
                 lk = lk + log(newprob)
@@ -77,11 +79,13 @@ def find_likelyhood(tpars, x, xc, logrf, logmk, minage, c, d, logv, mask,
 
         # ipo/acq/another round with bad return but good dates
         elif xc[il] == 2:
-            ageindx = math.floor((to_decimal_date(outdat) - start_year) * 4) - begdatinx
-            if ageindx + 1 < minage * 4:
+            exit_index = math.floor((exit_date - start_year) * 4) - quarter_index - 1
+            if debug: print("round date: {}\nexit date: {}\nquarter index: {}\nexit index: {}\nround index: {}\n"
+                            .format(x[il, 3], x[il, 6], quarter_index, exit_index, round_index))
+            if exit_index + 1 < minage * 4:
                 newprob = sum(prob_ipo_hid[:int(min(minage * 4, prob_ipo_hid.shape[0]))])
             else:
-                newprob = prob_ipo_hid[ageindx]
+                newprob = prob_ipo_hid[exit_index]
             if newprob > 0:
                 lk = lk + log(newprob)
             else:
@@ -89,32 +93,38 @@ def find_likelyhood(tpars, x, xc, logrf, logmk, minage, c, d, logv, mask,
 
         # ipo/acq with bad return and bad end date
         elif xc[il] == 3:
-            ageindx = sample_size - begdatinx - 1
-            if sum(prob_ipo_hid[:ageindx + 1]) > 0:
-                newprob = sum(prob_ipo_hid[:ageindx + 1])
+            exit_index = sample_size - quarter_index - 1
+            if debug: print("round date: {}\nquarter index: {}\nround index: {}\n"
+                            .format(x[il, 3], quarter_index, round_index))
+            if sum(prob_ipo_hid[:exit_index + 1]) > 0:
+                newprob = sum(prob_ipo_hid[:exit_index + 1])
                 lk = lk + log(newprob)
             else:
                 return np.inf
 
         # still private, good dates
         elif xc[il] == 4:
-            ageindx = sample_size - begdatinx - 1
-            if prob_pvt[ageindx] > 0:
-                newprob = prob_pvt[ageindx]
+            exit_index = sample_size - quarter_index - 1
+            if debug: print("round date: {}\nquarter index: {}\nround index: {}\n"
+                            .format(x[il, 3], quarter_index, round_index))
+            if prob_pvt[exit_index] > 0:
+                newprob = prob_pvt[exit_index]
                 lk = lk + log(newprob)
             else:
                 return np.inf
 
         # use dates to infer bankrupt 'on or before' given date */
         elif xc[il] == 5.3:
-            ageindx = math.floor((to_decimal_date(outdat) - start_year) * 4) - begdatinx
-            if ageindx + 1 > minage * 4:
-                if sum(prob_bkp_obs[:ageindx + 1]) > 0:
-                    newprob = sum(prob_bkp_obs[:ageindx + 1])
+            exit_index = math.floor((exit_date - start_year) * 4) - quarter_index - 1
+            if debug: print("round date: {}\nexit date: {}\nquarter index: {}\nexit index: {}\nround index: {}\n"
+                            .format(x[il, 3], x[il, 6], quarter_index, exit_index, round_index))
+            if exit_index + 1 > minage * 4:
+                if sum(prob_bkp_obs[:exit_index + 1]) > 0:
+                    newprob = sum(prob_bkp_obs[:exit_index + 1])
                     lk = lk + log(newprob)
                 else:
                     return np.inf
-            if ageindx + 1 <= minage * 4:
+            if exit_index + 1 <= minage * 4:
                 if sum(prob_bkp_obs[:int(min(minage * 4, prob_bkp_obs.shape[0]))]) > 0:
                     newprob = sum(prob_bkp_obs[:int(min(minage * 4, prob_bkp_obs.shape[0]))])
                     lk = lk + log(newprob)
@@ -123,9 +133,11 @@ def find_likelyhood(tpars, x, xc, logrf, logmk, minage, c, d, logv, mask,
 
         # bankrupt, dates not ok
         elif xc[il] == 6:
-            ageindx = sample_size - begdatinx - 1
-            if sum(prob_bkp_hid[:ageindx + 1]) > 0:
-                newprob = sum(prob_bkp_hid[:ageindx + 1])
+            exit_index = sample_size - quarter_index - 1
+            if debug: print("round date: {}\nquarter index: {}\nround index: {}\n"
+                            .format(x[il, 3], quarter_index, round_index))
+            if sum(prob_bkp_hid[:exit_index + 1]) > 0:
+                newprob = sum(prob_bkp_hid[:exit_index + 1])
                 lk = lk + log(newprob)
             else:
                 return np.inf

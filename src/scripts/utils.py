@@ -1,5 +1,5 @@
 import pandas as pd
-from numpy import exp, log, array, floor, zeros, abs
+from numpy import exp, log, array, floor, zeros, abs, int64, float64
 
 
 def transform_params(gamma, delta, sigma, k, a, b, pim, mask, inv=False):
@@ -14,14 +14,29 @@ def transform_params(gamma, delta, sigma, k, a, b, pim, mask, inv=False):
         assert sigma > sigmin, f'transform_params ERROR: cant choose sigma less than {sigmin}'
 
         tparams = array([gamma, delta, log(sigma - sigmin), log(k), log(a), b, -log(1 / pim - 1)])
-        return tparams[mask == True]
+        return tparams[mask]
 
 
 def to_decimal_date(date):
-    y = floor(date / 1e4).astype(int)
-    m = floor(date / 100).astype(int) - 100 * y
-    d = date - 1e4 * y - 100 * m
-    return y + (m - 1) / 12 + d / 365
+    if isinstance(date, pd.Series):
+        if isinstance(date.loc[0], int64) or isinstance(date.loc[0], float64):
+            y = floor(date / 1e4).astype(int)
+            m = floor(date / 100).astype(int) - 100 * y
+            d = date - 1e4 * y - 100 * m
+        else:
+            y = date.apply(lambda x: x.year)
+            m = date.apply(lambda x: x.month)
+            d = date.apply(lambda x: x.day)
+    else:
+        if isinstance(date, int64) or isinstance(date, float64):
+            y = floor(date / 1e4).astype(int)
+            m = floor(date / 100).astype(int) - 100 * y
+            d = date - 1e4 * y - 100 * m
+        else:
+            y = date.year
+            m = date.month
+            d = date.day
+    return y + (m - 1) / 12 + (d - 1) / 365
 
 
 def display_return_stats(x):

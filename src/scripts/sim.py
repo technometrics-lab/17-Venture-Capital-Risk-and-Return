@@ -1,11 +1,11 @@
 import numpy as np
 
-from src.scripts.utils import *
+from scripts.utils import *
 
 
 def sim(gamma, delta, sigma, k, a, b, c, d, pim, start_date, logrf, logmk, logv, stockidx, dok, big, sample_size=54):
     def pipo_func(x):
-        return 1 / (1 + exp(-a * (x - b)))
+        return 1 / (1 + np.exp(-a * (x - b)))
 
     assert np.log(k) >= logv[0], 'sim ERROR: k off value grid'
     T = sample_size - start_date
