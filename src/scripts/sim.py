@@ -32,6 +32,7 @@ def sim(gamma, delta, sigma, k, a, b, c, d, pim, start_date, logrf, logmk, logv,
     val_step = (val_rng - val_bot) / (N - 1)
 
     if start_date == 0 and stockidx > 0:
+        print((logv * filler.T.shape))
         pmat = (np.exp(-0.5 * (logv * filler.T - filler * logv.T - (
                     gamma + logrf.mean() + delta * (logmk.mean() - logrf.mean()))) ** 2
                        / (delta ** 2 * logmk.std() ** 2 + sigma ** 2)))
@@ -45,31 +46,31 @@ def sim(gamma, delta, sigma, k, a, b, c, d, pim, start_date, logrf, logmk, logv,
     else:
         prob_bank = 0
 
-    prob_ipo = pipo_func(logv)
-    prob_val = np.zeros(N)
-
     min_idx = np.argmin(np.abs(logv), axis=0)
+    prob_val = np.zeros(N)
     prob_val[min_idx] = 1e4
     prob_private = prob_val
+    prob_exit = pipo_func(logv)
+
+    dV = np.arange(val_bot - val_rng, val_rng - val_bot + val_step, val_step)
 
     for t in range(T):
         if start_date > 0 and stockidx > 0:
-            pmat0 = np.arange(val_bot - val_rng, val_rng - val_bot + val_step, val_step)
-            pmat0 = np.exp(-0.5 * (pmat0 - (gamma + logrf[start_date + t] + delta * (
+            prob_lnV = np.exp(-0.5 * (dV - (gamma + logrf[start_date + t] + delta * (
                         logmk[start_date + t] - logrf[start_date + t]))) ** 2 / sigma ** 2)
-            pmat0 /= pmat0.sum()
+            prob_lnV /= prob_lnV.sum()
 
             for i in range(N):
-                s = pmat0[N - i - 1: 2 * N - i - 1]
-                if pmat0[N - i - 1] > 0 or pmat0[2 * N - i - 2] > 0:
+                s = prob_lnV[N - i - 1: 2 * N - i - 1]
+                if prob_lnV[N - i - 1] > 0 or prob_lnV[2 * N - i - 2] > 0:
                     pmat[:, i] = s / s.sum()
                 else:
                     pmat[:, i] = s
 
         prob_val = pmat @ prob_private
-        phadip = np.multiply(prob_val, prob_ipo)
-        phadbk = np.multiply(np.multiply(prob_val, 1 - prob_ipo), prob_bank)
-        prob_private = np.multiply(np.multiply(prob_val, 1 - prob_ipo), 1 - prob_bank)
+        phadip = prob_val * prob_exit
+        phadbk = prob_val * (1 - prob_exit) * prob_bank
+        prob_private = prob_val * (1 - prob_exit) * (1 - prob_bank)
 
         prob_ipo_obs[t, :] = (1 - pim) * d * phadip + pim * d * phadip.mean()
         if big:

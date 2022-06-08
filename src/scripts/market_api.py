@@ -37,7 +37,7 @@ def get_fred_time_series(series_id: str, start=None, end=None, freq: str = None)
     return pd.DataFrame({'date': pd.to_datetime(dates), series_id: values}).set_index('date')
 
 
-def get_yfinance_time_series(ticker: str, start=None, end=None, freq: str = None) -> pd.DataFrame:
+def get_yfinance_time_series(ticker: str, start=None, end=None, freq: str = '1d') -> pd.DataFrame:
     if isinstance(start, int):
         start = str(start) + '-01-01'
     if isinstance(end, int):
