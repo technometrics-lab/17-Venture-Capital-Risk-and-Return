@@ -5,13 +5,16 @@ from scripts.market_api import get_yfinance_time_series, get_fred_time_series
 from scripts.utils import *
 
 
-def load_index_data(ticker: str = None, start=None, end=None, freq: str = None):
-    if (start is None) and (end is None):
-        data = pd.read_csv('../../data/cochrane_data/sptr.csv')
-        idx = data['data']
+def load_index_data(ticker: str = None, start=None, end=None, freq: str = None, test=False):
+    if test:
+        idx = pd.read_csv('data/cochrane_data/sptr.csv')['data'][::3]
     else:
-        assert ticker is not None, "Ticker must be specified when fetching from API"
-        idx = get_yfinance_time_series(ticker, start, end, freq)
+        if (start is None) and (end is None):
+            data = pd.read_csv('../../data/cochrane_data/sptr.csv')
+            idx = data['data']
+        else:
+            assert ticker is not None, "Ticker must be specified when fetching from API"
+            idx = get_yfinance_time_series(ticker, start, end, freq)
 
     logspret = np.log(idx.pct_change().dropna() + 1)
     return logspret
@@ -34,7 +37,7 @@ def load_venture_data(roundret: int = 0, round_code: int = 0, industry_code: int
         data = pd.read_csv('../../data/data.csv', parse_dates=['round_date', 'exit_date'])
         end_year = max(data.round_date).year
     else:
-        data = pd.read_csv('../../data/cochrane_data/returns.csv')
+        data = pd.read_csv('data/cochrane_data/returns.csv')
         end_year = 2000
 
     if (roundret == 1) or (round_code > 0):

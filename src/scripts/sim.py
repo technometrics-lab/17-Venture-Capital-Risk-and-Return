@@ -8,9 +8,8 @@ def sim(gamma, delta, sigma, k, a, b, c, d, pim, start_date, logrf, logmk, logv,
         return 1 / (1 + np.exp(-a * (x - b)))
 
     assert np.log(k) >= logv[0], 'sim ERROR: k off value grid'
-    T = sample_size - start_date
+    T = sample_size - start_date - 1
     N = logv.shape[0]
-    filler = np.ones(N)
 
     if big:
         prob_ipo_obs = np.zeros((T, N))
@@ -25,21 +24,21 @@ def sim(gamma, delta, sigma, k, a, b, c, d, pim, start_date, logrf, logmk, logv,
         prob_bkp_hid = np.zeros(T)
         prob_pvt = np.zeros(T)
 
-    pmat = np.zeros((N, N))
+    prob_lnV = np.zeros((N, N))
 
-    val_bot = logv[0]
-    val_rng = logv[-1]
-    val_step = (val_rng - val_bot) / (N - 1)
+    val_min = logv[0]
+    val_max = logv[-1]
+    val_step = (val_max - val_min) / (N - 1)
 
-    if start_date == 0 and stockidx > 0:
-        print((logv * filler.T.shape))
-        pmat = (np.exp(-0.5 * (logv * filler.T - filler * logv.T - (
-                    gamma + logrf.mean() + delta * (logmk.mean() - logrf.mean()))) ** 2
-                       / (delta ** 2 * logmk.std() ** 2 + sigma ** 2)))
-        pmat /= pmat.sum()
+    if start_date == -1 and stockidx > 0:
+        prob_lnV = np.zeros(N)
+        prob_lnV += (np.exp(-0.5 * (gamma + logrf.mean() + delta * (logmk.mean() - logrf.mean())) ** 2 /
+                            (delta ** 2 * logmk.std() ** 2 + sigma ** 2)))
+        prob_lnV /= prob_lnV.sum()
     elif stockidx == 0:
-        pmat = np.exp(-0.5 * (logv * filler.T - filler * logv.T - gamma) ** 2 / sigma ** 2)
-        pmat /= pmat.sum()
+        prob_lnV = np.zeros(N)
+        prob_lnV = np.exp(-0.5 * gamma ** 2 / sigma ** 2)
+        prob_lnV /= prob_lnV.sum()
 
     if dok:
         prob_bank = (logv <= np.log(k)) * (1 - (np.exp(logv) - np.exp(logv[0])) / (k - np.exp(logv[0])))
@@ -52,22 +51,22 @@ def sim(gamma, delta, sigma, k, a, b, c, d, pim, start_date, logrf, logmk, logv,
     prob_private = prob_val
     prob_exit = pipo_func(logv)
 
-    dV = np.arange(val_bot - val_rng, val_rng - val_bot + val_step, val_step)
+    dV = np.arange(val_min - val_max, val_max - val_min + val_step, val_step)
 
     for t in range(T):
-        if start_date > 0 and stockidx > 0:
-            prob_lnV = np.exp(-0.5 * (dV - (gamma + logrf[start_date + t] + delta * (
-                        logmk[start_date + t] - logrf[start_date + t]))) ** 2 / sigma ** 2)
-            prob_lnV /= prob_lnV.sum()
+        if start_date >= 0 and stockidx > 0:
+            prob_lnV0 = np.exp(-0.5 * (dV - (gamma + logrf[start_date + t + 1] + delta * (
+                    logmk[start_date + t + 1] - logrf[start_date + t + 1]))) ** 2 / sigma ** 2)
+            prob_lnV0 /= prob_lnV0.sum()
 
             for i in range(N):
-                s = prob_lnV[N - i - 1: 2 * N - i - 1]
-                if prob_lnV[N - i - 1] > 0 or prob_lnV[2 * N - i - 2] > 0:
-                    pmat[:, i] = s / s.sum()
+                s = prob_lnV0[N - i - 1: 2 * N - i - 1]
+                if prob_lnV0[N - i - 1] > 0 or prob_lnV0[2 * N - i - 2] > 0:
+                    prob_lnV[:, i] = s / s.sum()
                 else:
-                    pmat[:, i] = s
+                    prob_lnV[:, i] = s
 
-        prob_val = pmat @ prob_private
+        prob_val = prob_lnV @ prob_private
         phadip = prob_val * prob_exit
         phadbk = prob_val * (1 - prob_exit) * prob_bank
         prob_private = prob_val * (1 - prob_exit) * (1 - prob_bank)

@@ -1,3 +1,4 @@
+import pandas as pd
 from scripts.preprocess import *
 from scripts.minimize_lkh import Model
 from scripts.utils import display_return_stats, find_case, transform_params
@@ -17,9 +18,12 @@ def main(gamma, delta, sigma, k, a, b, pi, impose_alpha=False, stockidx=1, nopi=
     start_date, end_date = get_dates(x, test)
     size = (end_date.to_period(freq='Q') - start_date.to_period(freq='Q')).n + 2
     start, end = start_date.year, end_date.year
+    if test:
+        start = '1987-01-01'
+        end = '2000-08-02'
 
-    logmk = load_index_data('^SP500TR', start, end, '1mo')
     logrf = load_tbills_data('TB3MS', start, end)
+    logmk = load_index_data('^SP500TR', start, end, '1mo', test)
 
     print(f"number of observations: {x.shape[0]}")
     x["ddate"] = to_decimal_date(x["round_date"])
@@ -57,4 +61,4 @@ if __name__ == "__main__":
     b0 = 3
     pi0 = 0.01
 
-    res = main(gamma0, delta0, sigma0, k0, a0, b0, pi0, test=False)
+    res = main(gamma0, delta0, sigma0, k0, a0, b0, pi0, test=True)

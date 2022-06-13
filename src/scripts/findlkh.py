@@ -1,7 +1,7 @@
 import numpy as np
 import math
-from src.scripts.utils import *
-from src.scripts.sim import sim
+from scripts.utils import *
+from scripts.sim import sim
 
 
 def find_likelyhood(tpars, x, xc, logrf, logmk, minage, c, d, logv, mask,
@@ -93,7 +93,7 @@ def find_likelyhood(tpars, x, xc, logrf, logmk, minage, c, d, logv, mask,
 
         # ipo/acq with bad return and bad end date
         elif xc[il] == 3:
-            exit_index = sample_size - quarter_index - 1
+            exit_index = sample_size - quarter_index - 2
             if debug: print("round date: {}\nquarter index: {}\nround index: {}\n"
                             .format(x[il, 3], quarter_index, round_index))
             if sum(prob_ipo_hid[:exit_index + 1]) > 0:
@@ -104,7 +104,7 @@ def find_likelyhood(tpars, x, xc, logrf, logmk, minage, c, d, logv, mask,
 
         # still private, good dates
         elif xc[il] == 4:
-            exit_index = sample_size - quarter_index - 1
+            exit_index = prob_pvt.shape[0] - 1
             if debug: print("round date: {}\nquarter index: {}\nround index: {}\n"
                             .format(x[il, 3], quarter_index, round_index))
             if prob_pvt[exit_index] > 0:
@@ -133,7 +133,7 @@ def find_likelyhood(tpars, x, xc, logrf, logmk, minage, c, d, logv, mask,
 
         # bankrupt, dates not ok
         elif xc[il] == 6:
-            exit_index = sample_size - quarter_index - 1
+            exit_index = prob_pvt.shape[0] - 1
             if debug: print("round date: {}\nquarter index: {}\nround index: {}\n"
                             .format(x[il, 3], quarter_index, round_index))
             if sum(prob_bkp_hid[:exit_index + 1]) > 0:
