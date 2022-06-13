@@ -1,5 +1,0 @@
-setup.py
-vcanalysis.egg-info/PKG-INFO
-vcanalysis.egg-info/SOURCES.txt
-vcanalysis.egg-info/dependency_links.txt
-vcanalysis.egg-info/top_level.txt
