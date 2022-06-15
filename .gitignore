@@ -1,4 +1,4 @@
-src/notebooks/.env
+.env
 data/crunchbase/
 .idea/
 .DS_Store

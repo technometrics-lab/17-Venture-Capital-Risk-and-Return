@@ -1,5 +1,5 @@
 import numpy as np
-
+import matplotlib.pyplot as plt
 from scripts.utils import *
 
 
@@ -51,14 +51,15 @@ def sim(gamma, delta, sigma, k, a, b, c, d, pim, start_date, logrf, logmk, logv,
     prob_private = prob_val
     prob_exit = pipo_func(logv)
 
-    dV = np.arange(val_min - val_max, val_max - val_min + val_step, val_step)
+    dlogV = np.arange(val_min - val_max, val_max - val_min + 2*val_step, val_step)
 
     for t in range(T):
         if start_date >= 0 and stockidx > 0:
-            prob_lnV0 = np.exp(-0.5 * (dV - (gamma + logrf[start_date + t + 1] + delta * (
-                    logmk[start_date + t + 1] - logrf[start_date + t + 1]))) ** 2 / sigma ** 2)
-            prob_lnV0 /= prob_lnV0.sum()
-
+            mu = gamma + logrf[start_date+t+1] + delta * (logmk[start_date+t+1] - logrf[start_date+t+1])
+            prob_lnV0 = (np.exp(-(dlogV - mu)**2 / (2 * sigma**2)) / (np.exp(dlogV) * sigma * np.sqrt(2 * np.pi)))
+            prob_lnV0 = prob_lnV0[:-1] * np.diff(exp(dlogV))
+            # OLD AND BAD: prob_lnV0 /= prob_lnV0.sum(), some sort of KDE ??
+            
             for i in range(N):
                 s = prob_lnV0[N - i - 1: 2 * N - i - 1]
                 if prob_lnV0[N - i - 1] > 0 or prob_lnV0[2 * N - i - 2] > 0:

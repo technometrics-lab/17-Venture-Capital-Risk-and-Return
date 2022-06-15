@@ -7,7 +7,7 @@ import yfinance
 
 
 def get_fred_time_series(series_id: str, start=None, end=None, freq: str = None) -> pd.DataFrame:
-    fred_api_key = dotenv.get_key('./.env', "FRED_API_KEY")
+    fred_api_key = dotenv.get_key('.env', "FRED_API_KEY")
     freqs = ['d', 'w', 'bw', 'm', 'q', 'sa', 'a', 'wef', 'weth',
              'wew', 'wetu', 'wem', 'wesu', 'wesa', 'bwew', 'bwem']
     url = (f'https://api.stlouisfed.org/fred/series/observations?'

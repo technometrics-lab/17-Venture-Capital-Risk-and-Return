@@ -56,7 +56,7 @@ def find_likelyhood(tpars, x, xc, logrf, logmk, minage, c, d, logv, mask,
                 prob_pvt, prob_ipo_obs, prob_ipo_hid, prob_bkp_obs, prob_bkp_hid = sim(*sim_params)
             quarter_index = round_index
 
-        # ipo/acq with good date and return data/cochrane_test_files
+        # ipo/acq with good date and return
         if xc[il] == 1:
             # quarter of exit with 1987:1 = 1 - start
             exit_index = math.floor((exit_date - start_year) * 4) - quarter_index - 1
