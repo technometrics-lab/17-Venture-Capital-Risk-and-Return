@@ -34,7 +34,7 @@ def load_tbills_data(series_id: str = None, start=None, end=None, freq: str = No
 
 def load_venture_data(roundret: int = 0, round_code: int = 0, industry_code: int = 0, test=False):
     if not test:
-        data = pd.read_csv('../../data/data.csv', parse_dates=['round_date', 'exit_date'])
+        data = pd.read_csv('data/data.csv', parse_dates=['round_date', 'exit_date'])
         end_year = max(data.round_date).year
     else:
         data = pd.read_csv('data/cochrane_data/returns.csv')
@@ -74,4 +74,5 @@ def load_venture_data(roundret: int = 0, round_code: int = 0, industry_code: int
     # discard super-extreme returns: hand-checked incorrect values
     data = data[(data["return_usd"] <= 300)]
 
+    data[['group_num', 'seg_num', 'exit_type']] = data[['group_num', 'seg_num', 'exit_type']].astype(int)
     return data.reset_index(drop=True)
