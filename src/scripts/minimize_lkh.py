@@ -7,7 +7,7 @@ from scripts.utils import transform_params
 
 
 class Model:
-    def __init__(self, x, xc, logrf, logmk, minage, c, d, logv, mask, stockidx, dok, start_year, sample_size):
+    def __init__(self, x, xc, logrf, logmk, minage, c, d, logv, mask, stockidx, use_k, start_year, sample_size):
         self.x = x.to_numpy()
         self.logrf = logrf.to_numpy()
         self.logmk = logmk.to_numpy()
@@ -18,7 +18,7 @@ class Model:
         self.d = d
         self.mask = mask
         self.stockidx = stockidx
-        self.dok = dok
+        self.dok = use_k
         self.start_year = start_year
         self.sample_size = sample_size
         self.curr_iter = 0
@@ -31,12 +31,12 @@ class Model:
     def optimize_likelyhood(self, tpar0, mask, maxiter=15):
         self.curr_iter = 0
         print("{0:<5}{1:<10}{2:<10}{3:<10}{4:<10}{5:<10}{6:<10}{7:<10}{8:<10}"
-              .format("iter", "gamma", "delta", "sigma", "k", "a", "b", "pim", "lkh"))
+              .format("iter", "gamma", "delta", "sigma", "k", "a", "b", "pi_err", "lkh"))
         res = minimize(self.model_likelyhood, tpar0, options={'maxiter': maxiter}, callback=self.printer_callback)
 
         resx, resh = res.x, res.hess_inv
         params = transform_params(*resx, mask, inv=True)
-        labels = array(['gamma', 'delta', 'sigma', 'k', 'a', 'b', 'pim'])[mask]
+        labels = array(['gamma', 'delta', 'sigma', 'k', 'a', 'b', 'pi_err'])[mask]
 
         std = sqrt(diag(resh))[mask]  # fisher information matrix
         res = list(map(list, zip(params, std)))

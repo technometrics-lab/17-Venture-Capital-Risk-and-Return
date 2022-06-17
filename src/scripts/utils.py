@@ -1,19 +1,20 @@
 import pandas as pd
+from tqdm import tqdm
 from numpy import exp, log, array, floor, zeros, abs, int64, float64
 
 
-def transform_params(gamma, delta, sigma, k, a, b, pim, mask, inv=False):
+def transform_params(gamma, delta, sigma, k, a, b, pi_err, mask, inv=False):
     sigmin = 1e-4
     mask = array(mask)
     assert any(mask)
 
     if inv:
-        tparams = array([gamma, delta, exp(sigma) + sigmin, exp(k), exp(a), b, 1 / (exp(-pim) + 1)])
+        tparams = array([gamma, delta, exp(sigma) + sigmin, exp(k), exp(a), b, 1 / (exp(-pi_err) + 1)])
         return tparams
     else:
         assert sigma > sigmin, f'transform_params ERROR: cant choose sigma less than {sigmin}'
 
-        tparams = array([gamma, delta, log(sigma - sigmin), log(k), log(a), b, -log(1 / pim - 1)])
+        tparams = array([gamma, delta, log(sigma - sigmin), log(k), log(a), b, -log(1 / pi_err - 1)])
         return tparams[mask]
 
 
@@ -59,22 +60,22 @@ def display_return_stats(x):
     print(f'\tPercent fate unknown: {fu:.2f}%')
 
 
-def find_case(data, dok, bankhand, start_year=1987):
+def find_case(data, use_k, bankhand, start_year=1987):
     cases = zeros(data.shape[0])
     data = data.reset_index()
-
-    for index, row in data.iterrows():
+    print("Finding category for each observation")
+    for index, row in tqdm(data.iterrows(), total=data.shape[0]):
         if (row["exit_type"] in [1, 2, 6]) and (row["exit_date"] != -99) and (row["return_usd"] > 0):
             cases[index] = 1
         elif (row["exit_type"] in [1, 2, 5, 6]) and (row["exit_date"] != -99):
             cases[index] = 2
         elif row["exit_type"] in [1, 2, 5, 6]:
             cases[index] = 3
-        elif (row["exit_type"] == 4) or ((row["exit_type"] == 3) and (dok == 0)):
+        elif (row["exit_type"] == 4) or ((row["exit_type"] == 3) and (use_k == 0)):
             cases[index] = 4
-        elif (row["exit_type"] == 3) and (row["exit_date"] != -99) and (bankhand == 2) and (dok == 1):
+        elif (row["exit_type"] == 3) and (row["exit_date"] != -99) and (bankhand == 2) and (use_k == 1):
             cases[index] = 5.3
-        elif (row["exit_type"] == 3) and (row["round_date"] != -99) and (dok == 1):
+        elif (row["exit_type"] == 3) and (row["round_date"] != -99) and (use_k == 1):
             cases[index] = 6
         else:
             print(row)

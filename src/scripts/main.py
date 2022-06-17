@@ -1,4 +1,5 @@
 import pandas as pd
+import pickle
 from scripts.preprocess import *
 from scripts.minimize_lkh import Model
 from scripts.utils import display_return_stats, find_case, transform_params
@@ -13,7 +14,7 @@ def get_dates(x, test=False):
     return start_date, end_date
 
 
-def main(gamma, delta, sigma, k, a, b, pi, impose_alpha=False, stockidx=1, nopi=0, dok=1, bankhand=2, test=False):
+def main(gamma, delta, sigma, k, a, b, pi, impose_alpha=False, stockidx=1, nopi=0, use_k=1, bankhand=2, test=False):
     x = load_venture_data(test=test)
     start_date, end_date = get_dates(x, test)
     size = (end_date.to_period(freq='Q') - start_date.to_period(freq='Q')).n + 2
@@ -43,11 +44,11 @@ def main(gamma, delta, sigma, k, a, b, pi, impose_alpha=False, stockidx=1, nopi=
     minage = 0.25
     logv = np.arange(-7, 7.1, 0.1)
     pi = 0 if nopi == 1 else pi
-    xc = find_case(x, dok, bankhand)
-    mask = [impose_alpha != 1, stockidx > 0, True, dok != 0, True, True, nopi != 1]
+    xc = find_case(x, use_k, bankhand)
+    mask = [impose_alpha != 1, stockidx > 0, True, use_k != 0, True, True, nopi != 1]
     tpar0 = transform_params(gamma, delta, sigma, k, a, b, pi, mask)
 
-    model = Model(x, xc, logrf, logmk, minage, c, d, logv, mask, stockidx, dok, start_year=to_decimal_date(start_date), sample_size=size)
+    model = Model(x, xc, logrf, logmk, minage, c, d, logv, mask, stockidx, use_k, start_year=to_decimal_date(start_date), sample_size=size)
     model.model_likelyhood(tpar0)
     return model.optimize_likelyhood(tpar0, mask, maxiter=30)
 
@@ -61,4 +62,9 @@ if __name__ == "__main__":
     b0 = 3
     pi0 = 0.01
 
-    res = main(gamma0, delta0, sigma0, k0, a0, b0, pi0, test=True)
+    res = main(gamma0, delta0, sigma0, k0, a0, b0, pi0, test=False)
+    file = open('Python.pkl', 'w')
+    pickle.dump(res, file)
+    file.close()
+    # res = [0.0508, -0.4239, -1.7762, -0.4454, -0.6352, 9.3806, -0.6050]
+    print(res)

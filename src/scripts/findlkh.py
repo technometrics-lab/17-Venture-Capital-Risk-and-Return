@@ -5,29 +5,29 @@ from scripts.sim import sim
 
 
 def find_likelyhood(tpars, x, xc, logrf, logmk, minage, c, d, logv, mask,
-                    stockidx, dok, start_year=1987, sample_size=54):
+                    stockidx, use_k, start_year=1987, sample_size=54):
     debug = False
 
     xlo = transform_params(-1, -10, 0.1, 0.01, 0.1, 0.1, 1e-6, mask)
     xhi = transform_params(1, 10, 5, 1.5, 10, 10, 1 - 1e-6, mask)
 
-    penalty = 1e6 * sum((tpars < xlo) * (xlo - tpars) + (tpars > xhi) * (tpars - xhi)) ** 2
+    penalty = 1e6 * sum((tpars < xlo) * (xlo - tpars) + (tpars > xhi) * (tpars - xhi))**2
     tpars = (tpars < xlo) * xlo + (tpars > xhi) * xhi + ((tpars >= xlo) & (tpars <= xhi)) * tpars
-    gamma, delta, sigma, k, a, b, pim = transform_params(*tpars, mask, inv=True)
+    gamma, delta, sigma, k, a, b, pi_err = transform_params(*tpars, mask, inv=True)
 
     if not mask[6]:
-        pim = 0
+        pi_err = 0
 
     if not mask[0]:
         if not stockidx:
-            gamma = log(1 + 15 / 400) - 0.5 * sigma ** 2
+            gamma = log(1 + 15 / 400) - 0.5 * sigma**2
         elif stockidx == 1:
             mlogrf = logrf.mean()
             mlogmk = logmk.mean()
             msigma = sigma.mean()
-            gamma = (-log(exp(delta * (mlogmk - mlogrf) + 0.5 * (delta * msigma) ** 2 + 0.5 * sigma ** 2)
-                          * (1 + (exp(delta * msigma ** 2) - 1) * (exp(-(mlogmk - mlogrf) - 0.5 * msigma ** 2) - 1)
-                             / (exp(msigma ** 2) - 1))))
+            gamma = (-log(exp(delta * (mlogmk - mlogrf) + 0.5 * (delta * msigma)**2 + 0.5 * sigma**2)
+                          * (1 + (exp(delta * msigma**2) - 1) * (exp(-(mlogmk - mlogrf) - 0.5 * msigma**2) - 1)
+                             / (exp(msigma**2) - 1))))
         else:
             assert False, 'find_likelyhood ERROR: trying to impose alpha = 0 for model other than SP500 or no stock.'
 
@@ -38,7 +38,7 @@ def find_likelyhood(tpars, x, xc, logrf, logmk, minage, c, d, logv, mask,
         return np.inf
 
     quarter_index = -1
-    sim_params = [gamma, delta, sigma, k, a, b, c, d, pim, quarter_index, logrf, logmk, logv, stockidx, dok, 0, sample_size]
+    sim_params = [gamma, delta, sigma, k, a, b, c, d, pi_err, quarter_index, logrf, logmk, logv, stockidx, use_k, 0, sample_size]
     if not stockidx:
         prob_pvt, prob_ipo_obs, prob_ipo_hid, prob_bkp_obs, prob_bkp_hid = sim(*sim_params)
 
