@@ -50,8 +50,10 @@ def sim(gamma, delta, sigma, k, a, b, c, d, pi_err, start_date, logrf, logmk, lo
 
     for t in range(T):
         if start_date >= 0 and stockidx > 0:
-            mu = gamma + logrf[start_date+t+1] + delta * (logmk[start_date+t+1] - logrf[start_date+t+1])
-            prob_lnV0 = np.diff(lognorm.cdf(np.exp(dlogV), scale=np.exp(mu), s=sigma))
+            mu = gamma + logrf[start_date+t+1] + \
+                delta * (logmk[start_date+t+1] - logrf[start_date+t+1])
+            distr = lognorm(scale=np.exp(mu), s=sigma)
+            prob_lnV0 = np.diff(distr.cdf(np.exp(dlogV)))
             # OLD AND BAD:
             # prob_lnV0 = np.exp(-(dlogV - mu)**2 / (2 * sigma**2))
             # prob_lnV0 /= prob_lnV0.sum()
