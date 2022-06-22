@@ -4,11 +4,11 @@ from scripts.utils import *
 from scipy.stats import lognorm
 
 
-def sim(gamma, delta, sigma, k, a, b, c, d, pi_err, start_date, logrf, logmk, logv, stockidx, use_k, big, sample_size=54):
+def sim(gamma, delta, sigma, k, a, b, c, d, pi_err, start, logrf, logmk, logv, stockidx, use_k, big, sample_size=54):
     def pipo_func(x):
         return 1 / (1 + np.exp(-a * (x - b)))
 
-    T = sample_size - start_date - 1
+    T = sample_size - start - 1
     N = logv.shape[0]
 
     if big:
@@ -49,9 +49,8 @@ def sim(gamma, delta, sigma, k, a, b, c, d, pi_err, start_date, logrf, logmk, lo
     dlogV = np.arange(val_min - val_max, val_max - val_min + 2*val_step, val_step)
 
     for t in range(T):
-        if start_date >= 0 and stockidx > 0:
-            mu = gamma + logrf[start_date+t+1] + \
-                delta * (logmk[start_date+t+1] - logrf[start_date+t+1])
+        if start >= 0 and stockidx > 0:
+            mu = gamma + logrf[start+t+1] + delta * (logmk[start+t+1] - logrf[start+t+1])
             distr = lognorm(scale=np.exp(mu), s=sigma)
             prob_lnV0 = np.diff(distr.cdf(np.exp(dlogV)))
             # OLD AND BAD:
