@@ -14,8 +14,8 @@ def get_dates(x, test=False):
     return start_date, end_date
 
 
-def main(gamma, delta, sigma, k, a, b, pi, impose_alpha=False, stockidx=1, nopi=0, use_k=1, bankhand=2, test=False):
-    x = load_venture_data(test=test)
+def main(gamma, delta, sigma, k, a, b, pi, impose_alpha=False, stockidx=1, nopi=0, use_k=1, bankhand=2, test=False, pred=True):
+    x = load_venture_data(test=test, pred=pred)
     start_date, end_date = get_dates(x, test)
     size = (end_date.to_period(freq='Q') - start_date.to_period(freq='Q')).n + 2
     start, end = start_date.year, end_date.year
@@ -62,9 +62,8 @@ if __name__ == "__main__":
     b0 = 3
     pi0 = 0.01
 
-    res = main(gamma0, delta0, sigma0, k0, a0, b0, pi0, test=False)
-    file = open('Python.pkl', 'w')
-    pickle.dump(res, file)
-    file.close()
-    # res = [0.0508, -0.4239, -1.7762, -0.4454, -0.6352, 9.3806, -0.6050]
+    res = main(gamma0, delta0, sigma0, k0, a0, b0, pi0, test=False, pred=False)
+    
+    # with open('res.pkl', 'wb') as file:
+    #     pickle.dump(res, file)
     print(res)

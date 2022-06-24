@@ -6,7 +6,6 @@ from scripts.sim import sim
 
 def find_likelyhood(tpars, x, xc, logrf, logmk, minage, c, d, logv, mask,
                     stockidx, use_k, start_year=1987, sample_size=54):
-    debug = False
 
     xlo = transform_params(-1, -10, 0.1, 0.01, 0.1, 0.1, 1e-6, mask)
     xhi = transform_params(1, 10, 5, 1.5, 10, 10, 1 - 1e-6, mask)

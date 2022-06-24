@@ -7,6 +7,9 @@ from scipy.stats import lognorm
 def sim(gamma, delta, sigma, k, a, b, c, d, pi_err, start, logrf, logmk, logv, stockidx, use_k, big, sample_size=54):
     def pipo_func(x):
         return 1 / (1 + np.exp(-a * (x - b)))
+    
+    def bkp_prob(x):
+        return (x <= np.log(k)) * (1 - (np.exp(x) - np.exp(logv[0])) / (k - np.exp(logv[0])))
 
     T = sample_size - start - 1
     N = logv.shape[0]
@@ -36,7 +39,7 @@ def sim(gamma, delta, sigma, k, a, b, c, d, pi_err, start, logrf, logmk, logv, s
         prob_lnV /= prob_lnV.sum()
 
     if use_k:
-        prob_bank = (logv <= np.log(k)) * (1 - (np.exp(logv) - np.exp(logv[0])) / (k - np.exp(logv[0])))
+        prob_bank = bkp_prob(logv)
     else:
         prob_bank = 0
 

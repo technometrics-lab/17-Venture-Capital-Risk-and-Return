@@ -32,9 +32,12 @@ def load_tbills_data(series_id: str = None, start=None, end=None, freq: str = No
     return logrf
 
 
-def load_venture_data(roundret: int = 0, round_code: int = 0, industry_code: int = 0, test=False):
+def load_venture_data(roundret: int = 0, round_code: int = 0, industry_code: int = 0, test=False, pred=True):
     if not test:
-        data = pd.read_csv('data/data.csv', parse_dates=['round_date', 'exit_date'])
+        if pred:
+            data = pd.read_csv('data/data.csv', parse_dates=['round_date', 'exit_date'])
+        else:
+            data = pd.read_csv('data/data_nopred.csv', parse_dates=['round_date', 'exit_date'])
         end_year = max(data.round_date).year
     else:
         data = pd.read_csv('data/cochrane_data/returns.csv')
