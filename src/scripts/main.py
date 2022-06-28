@@ -64,6 +64,14 @@ if __name__ == "__main__":
 
     res = main(gamma0, delta0, sigma0, k0, a0, b0, pi0, test=False, pred=True)
     
-    # with open('res.pkl', 'wb') as file:
-    #     pickle.dump(res, file)
     print(res)
+    with open('res.pkl', 'wb') as file:
+        pickle.dump(res, file)
+        
+
+###### TODO #######
+# run simulations for all datasets: predicitons, cochrane, no pred, bootstrap, 
+# same but run by sector
+# add missing exit values (go with 1st day market cap, fk it)
+# improve selection function
+# draw graphs of empiracal CDFs
