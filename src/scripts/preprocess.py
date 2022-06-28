@@ -10,7 +10,7 @@ def load_index_data(ticker: str = None, start=None, end=None, freq: str = None, 
         idx = pd.read_csv('data/cochrane_data/sptr.csv')['data'][::3]
     else:
         if (start is None) and (end is None):
-            data = pd.read_csv('../../data/cochrane_data/sptr.csv')
+            data = pd.read_csv('./data/cochrane_data/sptr.csv')
             idx = data['data']
         else:
             assert ticker is not None, "Ticker must be specified when fetching from API"
@@ -22,7 +22,7 @@ def load_index_data(ticker: str = None, start=None, end=None, freq: str = None, 
 
 def load_tbills_data(series_id: str = None, start=None, end=None, freq: str = None):
     if (start is None) and (end is None):
-        data = pd.read_csv('../../data/cochrane_data/tb3ms.csv')
+        data = pd.read_csv('./data/cochrane_data/tb3ms.csv')
         rf = data['rf']
     else:
         assert series_id is not None, "Series id must be specified when fetching from API"
@@ -32,15 +32,17 @@ def load_tbills_data(series_id: str = None, start=None, end=None, freq: str = No
     return logrf
 
 
-def load_venture_data(roundret: int = 0, round_code: int = 0, industry_code: int = 0, test=False, pred=True):
+def load_venture_data(roundret: int = 0, round_code: int = 0, industry_code=None, test=False, pred=True):
     if not test:
         if pred:
-            data = pd.read_csv('data/data.csv', parse_dates=['round_date', 'exit_date'])
+            data = pd.read_csv('./data/data.csv', parse_dates=['round_date', 'exit_date'])
         else:
-            data = pd.read_csv('data/data_nopred.csv', parse_dates=['round_date', 'exit_date'])
+            data = pd.read_csv('./data/data_nopred.csv', parse_dates=['round_date', 'exit_date'])
         end_year = max(data.round_date).year
+        data.exit_date = pd.to_datetime(data.exit_date)
+        data.round_date = pd.to_datetime(data.round_date)
     else:
-        data = pd.read_csv('data/cochrane_data/returns.csv')
+        data = pd.read_csv('./data/cochrane_data/returns.csv')
         end_year = 2000
 
     if (roundret == 1) or (round_code > 0):
@@ -52,7 +54,7 @@ def load_venture_data(roundret: int = 0, round_code: int = 0, industry_code: int
             data = data[data["round_num"] == round_code]
             assert not data.empty, f"No data points for rounds = {round_code}"
 
-    if industry_code > 0:
+    if industry_code is not None:
         data = data[data.group_num == industry_code]
         assert not data.empty, f"No data points for industry = {industry_code}"
 
@@ -77,5 +79,4 @@ def load_venture_data(roundret: int = 0, round_code: int = 0, industry_code: int
     # discard super-extreme returns: hand-checked incorrect values
     data = data[(data["return_usd"] <= 300)]
 
-    data[['group_num', 'seg_num', 'exit_type']] = data[['group_num', 'seg_num', 'exit_type']].astype(int)
     return data.reset_index(drop=True)

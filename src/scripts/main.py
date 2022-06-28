@@ -62,7 +62,7 @@ if __name__ == "__main__":
     b0 = 3
     pi0 = 0.01
 
-    res = main(gamma0, delta0, sigma0, k0, a0, b0, pi0, test=False, pred=False)
+    res = main(gamma0, delta0, sigma0, k0, a0, b0, pi0, test=False, pred=True)
     
     # with open('res.pkl', 'wb') as file:
     #     pickle.dump(res, file)
