@@ -14,8 +14,7 @@ def get_dates(x, test=False):
     return start_date, end_date
 
 
-def main(gamma, delta, sigma, k, a, b, pi, impose_alpha=False, stockidx=1, nopi=0, use_k=1, bankhand=2, test=False, pred=True):
-    x = load_venture_data(test=test, pred=pred)
+def main(x, gamma, delta, sigma, k, a, b, pi, impose_alpha=False, stockidx=1, nopi=0, use_k=1, bankhand=2, test=False):
     start_date, end_date = get_dates(x, test)
     size = (end_date.to_period(freq='Q') - start_date.to_period(freq='Q')).n + 2
     start, end = start_date.year, end_date.year
@@ -50,10 +49,11 @@ def main(gamma, delta, sigma, k, a, b, pi, impose_alpha=False, stockidx=1, nopi=
 
     model = Model(x, xc, logrf, logmk, minage, c, d, logv, mask, stockidx, use_k, start_year=to_decimal_date(start_date), sample_size=size)
     model.model_likelyhood(tpar0)
-    return model.optimize_likelyhood(tpar0, mask, maxiter=30)
+    return model.optimize_likelyhood(tpar0, mask)
 
 
 if __name__ == "__main__":
+    N = 50
     gamma0 = 0.01
     delta0 = 1.5
     sigma0 = 0.9
@@ -61,12 +61,18 @@ if __name__ == "__main__":
     a0 = 1
     b0 = 3
     pi0 = 0.01
-
-    res = main(gamma0, delta0, sigma0, k0, a0, b0, pi0, test=False, pred=True)
     
-    print(res)
-    with open('res.pkl', 'wb') as file:
-        pickle.dump(res, file)
+    bootstrap_res = {}
+    x = load_venture_data(pred=False, test=False)
+    
+    for i in tqdm(range(N)):
+        x_i = x.sample(frac=0.30, replace=False).reset_index(drop=True)
+        res = main(x_i, gamma0, delta0, sigma0, k0, a0, b0, pi0, test=False)
+        bootstrap_res[i] = res
+    
+    print(bootstrap_res)
+    with open('res_bootstrap.pkl', 'wb') as file:
+        pickle.dump(bootstrap_res, file)
         
 
 ###### TODO #######

@@ -54,48 +54,18 @@ def find_likelyhood(tpars, x, xc, logrf, logmk, minage, c, d, logv, mask,
                 prob_pvt, prob_ipo_obs, prob_ipo_hid, prob_bkp_obs, prob_bkp_hid = sim(*sim_params)
             quarter_index = round_index
 
-        match xc[il]:
-            # ipo/acq with good date and return
-            case 1:
-                # quarter of exit with 1987:1 = 1 - start
-                exit_index = math.floor((exit_date - start_year) * 4) - quarter_index - 1
-                logV = log(x[il, 9])
-                logVindx = np.argmin(np.abs(logV - logv))  # find nearest value gridpoint
-                if exit_index + 1 <= minage * 4:  # treat dates less than minage as "on or before"
-                    newprob = sum(prob_ipo_obs[:int(min(minage * 4, prob_ipo_obs.shape[0])), logVindx])
-                else:
-                    newprob = prob_ipo_obs[exit_index, logVindx]
-
-            # ipo/acq/another round with bad return but good dates
-            case 2:
-                exit_index = math.floor((exit_date - start_year) * 4) - quarter_index - 1
-                if exit_index + 1 < minage * 4:
-                    newprob = sum(prob_ipo_hid[:int(min(minage * 4, prob_ipo_hid.shape[0]))])
-                else:
-                    newprob = prob_ipo_hid[exit_index]
-
-            # ipo/acq with bad return and bad end date (unused)
-            case 3:
-                exit_index = sample_size - quarter_index - 2
-                newprob = sum(prob_ipo_hid[:exit_index + 1])
-
-            # still private, good dates
-            case 4:
-                exit_index = prob_pvt.shape[0] - 1
-                newprob = prob_pvt[exit_index]
-
-            # use dates to infer bankrupt 'on or before' given date */
-            case 5.3:
-                exit_index = math.floor((exit_date - start_year) * 4) - quarter_index - 1
-                if exit_index + 1 > minage * 4:
-                    newprob = sum(prob_bkp_obs[:exit_index + 1])
-                elif sum(prob_bkp_obs[:int(min(minage * 4, prob_bkp_obs.shape[0]))]) > 0:
-                    newprob = prob_bkp_obs[exit_index]
-                        
-            # bankrupt, dates not ok
-            case 6:
-                exit_index = prob_pvt.shape[0] - 1
-                newprob = sum(prob_bkp_hid[:exit_index + 1])
+        if x[il] == 1:
+            newprob = good_return_and_date(x, minage, logv, start_year, quarter_index, prob_ipo_obs, il, exit_date)
+        if x[il] == 2:
+            newprob = good_date_bad_return(minage, start_year, quarter_index, prob_ipo_hid, exit_date)
+        if x[il] == 3:
+            newprob = bad_return_and_date(sample_size, quarter_index, prob_ipo_hid)
+        if x[il] == 4:
+            newprob = still_private(prob_pvt)
+        if x[il] == 5.3:
+            newprob = bankrupt_and_good_dates(minage, start_year, quarter_index, prob_bkp_obs, exit_date)      
+        if x[il] == 6:
+            newprob = bankrupt_and_bad_dates(prob_pvt, prob_bkp_hid)
         
         if newprob > 0:
             lk = lk + log(newprob)
@@ -104,3 +74,46 @@ def find_likelyhood(tpars, x, xc, logrf, logmk, minage, c, d, logv, mask,
 
     lk = - lk + penalty
     return lk
+
+
+def bankrupt_and_bad_dates(prob_pvt, prob_bkp_hid):
+    exit_index = prob_pvt.shape[0] - 1
+    newprob = sum(prob_bkp_hid[:exit_index + 1])
+    return newprob
+
+def bankrupt_and_good_dates(minage, start_year, quarter_index, prob_bkp_obs, exit_date):
+    exit_index = math.floor((exit_date - start_year) * 4) - quarter_index - 1
+    if exit_index + 1 > minage * 4:
+        newprob = sum(prob_bkp_obs[:exit_index + 1])
+    elif sum(prob_bkp_obs[:int(min(minage * 4, prob_bkp_obs.shape[0]))]) > 0:
+        newprob = prob_bkp_obs[exit_index]
+    return newprob
+
+def still_private(prob_pvt):
+    exit_index = prob_pvt.shape[0] - 1
+    newprob = prob_pvt[exit_index]
+    return newprob
+
+def bad_return_and_date(sample_size, quarter_index, prob_ipo_hid):
+    exit_index = sample_size - quarter_index - 2
+    newprob = sum(prob_ipo_hid[:exit_index + 1])
+    return newprob
+
+def good_date_bad_return(minage, start_year, quarter_index, prob_ipo_hid, exit_date):
+    exit_index = math.floor((exit_date - start_year) * 4) - quarter_index - 1
+    if exit_index + 1 < minage * 4:
+        newprob = sum(prob_ipo_hid[:int(min(minage * 4, prob_ipo_hid.shape[0]))])
+    else:
+        newprob = prob_ipo_hid[exit_index]
+    return newprob
+
+def good_return_and_date(x, minage, logv, start_year, quarter_index, prob_ipo_obs, il, exit_date):
+    # quarter of exit with 1987:1 = 1 - start
+    exit_index = math.floor((exit_date - start_year) * 4) - quarter_index - 1
+    logV = log(x[il, 9])
+    logVindx = np.argmin(np.abs(logV - logv))  # find nearest value gridpoint
+    if exit_index + 1 <= minage * 4:  # treat dates less than minage as "on or before"
+        newprob = sum(prob_ipo_obs[:int(min(minage * 4, prob_ipo_obs.shape[0])), logVindx])
+    else:
+        newprob = prob_ipo_obs[exit_index, logVindx]
+    return newprob

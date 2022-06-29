@@ -39,8 +39,8 @@ def load_venture_data(roundret: int = 0, round_code: int = 0, industry_code=None
         else:
             data = pd.read_csv('./data/data_nopred.csv', parse_dates=['round_date', 'exit_date'])
         end_year = max(data.round_date).year
-        data.exit_date = pd.to_datetime(data.exit_date)
-        data.round_date = pd.to_datetime(data.round_date)
+        data.exit_date = pd.to_datetime(data.exit_date, errors="coerce")
+        data.round_date = pd.to_datetime(data.round_date, errors="coerce")
     else:
         data = pd.read_csv('./data/cochrane_data/returns.csv')
         end_year = 2000
