@@ -14,7 +14,7 @@ def get_dates(x, test=False):
     return start_date, end_date
 
 
-def main(x, gamma, delta, sigma, k, a, b, pi, impose_alpha=False, stockidx=1, nopi=0, use_k=1, bankhand=2, test=False):
+def main(x, xc, gamma, delta, sigma, k, a, b, pi, impose_alpha=False, stockidx=1, nopi=0, use_k=1, test=False):
     start_date, end_date = get_dates(x, test)
     size = (end_date.to_period(freq='Q') - start_date.to_period(freq='Q')).n + 2
     start, end = start_date.year, end_date.year
@@ -24,10 +24,6 @@ def main(x, gamma, delta, sigma, k, a, b, pi, impose_alpha=False, stockidx=1, no
 
     logrf = load_tbills_data('TB3MS', start, end)
     logmk = load_index_data('^SP500TR', start, end, '1mo', test)
-
-    print(f"number of observations: {x.shape[0]}")
-    x["ddate"] = to_decimal_date(x["round_date"])
-    x = x.sort_values(by=["ddate", "company_num"]).drop(columns=["ddate"])
 
     display_return_stats(x)
 
@@ -43,7 +39,6 @@ def main(x, gamma, delta, sigma, k, a, b, pi, impose_alpha=False, stockidx=1, no
     minage = 0.25
     logv = np.arange(-7, 7.1, 0.1)
     pi = 0 if nopi == 1 else pi
-    xc = find_case(x, use_k, bankhand)
     mask = [impose_alpha != 1, stockidx > 0, True, use_k != 0, True, True, nopi != 1]
     tpar0 = transform_params(gamma, delta, sigma, k, a, b, pi, mask)
 
@@ -61,18 +56,24 @@ if __name__ == "__main__":
     a0 = 1
     b0 = 3
     pi0 = 0.01
+    use_k, bankhand = 1, 2
     
     bootstrap_res = {}
     x = load_venture_data(pred=False, test=False)
+    x["ddate"] = to_decimal_date(x["round_date"])
+    x = x.sort_values(by=["ddate", "company_num"]).drop(columns=["ddate"]).reset_index(drop=True)
+    xc = find_case(x, use_k, bankhand)
     
-    for i in tqdm(range(N)):
-        x_i = x.sample(frac=0.30, replace=False).reset_index(drop=True)
-        res = main(x_i, gamma0, delta0, sigma0, k0, a0, b0, pi0, test=False)
-        bootstrap_res[i] = res
+    main(x, xc, gamma0, delta0, sigma0, k0, a0, b0, pi0, test=False)
     
-    print(bootstrap_res)
-    with open('res_bootstrap.pkl', 'wb') as file:
-        pickle.dump(bootstrap_res, file)
+    # for i in tqdm(range(N)):
+    #     x_i = x.sample(frac=0.90, replace=False)
+    #     res = main(x_i.reset_index(drop=True), xc[x_i.index], gamma0, delta0, sigma0, k0, a0, b0, pi0, test=False)
+    #     bootstrap_res[i] = res
+    
+    # print(bootstrap_res)
+    # with open('res_bootstrap.pkl', 'wb') as file:
+    #     pickle.dump(bootstrap_res, file)
         
 
 ###### TODO #######

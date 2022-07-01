@@ -54,17 +54,17 @@ def find_likelyhood(tpars, x, xc, logrf, logmk, minage, c, d, logv, mask,
                 prob_pvt, prob_ipo_obs, prob_ipo_hid, prob_bkp_obs, prob_bkp_hid = sim(*sim_params)
             quarter_index = round_index
 
-        if x[il] == 1:
+        if xc[il] == 1:
             newprob = good_return_and_date(x, minage, logv, start_year, quarter_index, prob_ipo_obs, il, exit_date)
-        if x[il] == 2:
+        elif xc[il] == 2:
             newprob = good_date_bad_return(minage, start_year, quarter_index, prob_ipo_hid, exit_date)
-        if x[il] == 3:
+        elif xc[il] == 3:
             newprob = bad_return_and_date(sample_size, quarter_index, prob_ipo_hid)
-        if x[il] == 4:
+        elif xc[il] == 4:
             newprob = still_private(prob_pvt)
-        if x[il] == 5.3:
+        elif xc[il] == 5.3:
             newprob = bankrupt_and_good_dates(minage, start_year, quarter_index, prob_bkp_obs, exit_date)      
-        if x[il] == 6:
+        elif xc[il] == 6:
             newprob = bankrupt_and_bad_dates(prob_pvt, prob_bkp_hid)
         
         if newprob > 0:

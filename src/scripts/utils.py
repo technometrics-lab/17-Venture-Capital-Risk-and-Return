@@ -49,6 +49,7 @@ def display_return_stats(x):
     fsr = sum(x["exit_type"] == 6) / x.shape[0] * 100
     fu = 100 - (fi + fa + fb + freg + fp + fsr)
 
+    print(f"number of observations: {x.shape[0]}")
     print(('Note: following refers to round, not company.\n'
            'Round may end in another round, though company eventually goes public'))
     print(f'\tPercent bankrupt: {fb:.2f}%')
@@ -60,7 +61,7 @@ def display_return_stats(x):
     print(f'\tPercent fate unknown: {fu:.2f}%')
 
 
-def find_case(data, use_k, bankhand, start_year=1987):
+def find_case(data, use_k, bankhand):
     cases = zeros(data.shape[0])
     data = data.reset_index()
     print("Finding category for each observation")
