@@ -91,6 +91,6 @@ def sim(gamma, delta, sigma, k, a, b, c, d, pi_err, start, logrf, logmk, logv, s
     prob_ipo_hid /= 1e4
     prob_pvt /= 1e4
 
-    probsum = prob_pvt[-1] + prob_ipo_obs.sum() + prob_ipo_hid.sum() + prob_bkp_obs.sum() + prob_bkp_hid.sum();
-    assert abs(probsum - 1) < 1e-6, f"sim3 ERROR: Probabilities sum to more or less than one ({probsum:.4f})"
+    # probsum = prob_pvt[-1] + prob_ipo_obs.sum() + prob_ipo_hid.sum() + prob_bkp_obs.sum() + prob_bkp_hid.sum()
+    # assert abs(probsum - 1) < 1e-6, f"sim3 ERROR: Probabilities sum to more or less than one ({probsum:.4f})"
     return prob_pvt, prob_ipo_obs, prob_ipo_hid, prob_bkp_obs, prob_bkp_hid

@@ -1,4 +1,5 @@
 import cProfile
+from ensurepip import bootstrap
 import pstats
 import pandas as pd
 import pickle
@@ -60,21 +61,33 @@ if __name__ == "__main__":
     pi0 = 0.01
     use_k, bankhand = 1, 2
     
-    bootstrap_res = {}
-
-    x = load_venture_data(pred=False, test=False)
+    pred, bootstrap, test = False, False, False
+    
+    x = load_venture_data(pred=False, test=test)
     x["ddate"] = to_decimal_date(x["round_date"])
     x = x.sort_values(by=["ddate", "company_num"]).drop(columns=["ddate"]).reset_index(drop=True)
     xc = find_case(x, use_k, bankhand)
     
-    for i in tqdm(range(N)):
-        x_i = x.sample(frac=0.90, replace=False)
-        res = main(x_i.reset_index(drop=True), xc[x_i.index], gamma0, delta0, sigma0, k0, a0, b0, pi0, test=False)
-        bootstrap_res[i] = res
-    
-    # print(bootstrap_res)
-    # with open('res_bootstrap.pkl', 'wb') as file:
-    #     pickle.dump(bootstrap_res, file)
+    if bootstrap:
+        res = {}
+        for i in tqdm(range(N)):
+            x_i = x.sample(frac=0.90, replace=False)
+            bootstrap_res = main(x_i.reset_index(drop=True), xc[x_i.index], gamma0, delta0, sigma0, k0, a0, b0, pi0, test=False)
+            res[i] = bootstrap_res
+    else:
+        res = main(x, xc, gamma0, delta0, sigma0, k0, a0, b0, pi0, test=test)
+        
+    filename = 'res'
+    if test:
+        filename += '_cochrane'
+    elif bootstrap:
+        filename += '_bootstrap'
+    elif not pred:
+        filename += '_nopred'
+        
+    with open(filename + '.pkl', 'wb') as file:
+        pickle.dump(res, file)
+        
         
 
 ###### TODO #######

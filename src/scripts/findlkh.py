@@ -85,7 +85,7 @@ def bankrupt_and_good_dates(minage, start_year, quarter_index, prob_bkp_obs, exi
     exit_index = math.floor((exit_date - start_year) * 4) - quarter_index - 1
     if exit_index + 1 > minage * 4:
         newprob = sum(prob_bkp_obs[:exit_index + 1])
-    elif sum(prob_bkp_obs[:int(min(minage * 4, prob_bkp_obs.shape[0]))]) > 0:
+    else:
         newprob = prob_bkp_obs[exit_index]
     return newprob
 
