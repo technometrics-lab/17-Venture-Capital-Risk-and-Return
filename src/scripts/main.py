@@ -1,9 +1,11 @@
+import cProfile
+import pstats
 import pandas as pd
 import pickle
 from scripts.preprocess import *
 from scripts.minimize_lkh import Model
 from scripts.utils import display_return_stats, find_case, transform_params
-
+from scripts.sim import sim
 
 def get_dates(x, test=False):
     start_date, end_date = min(x.round_date), max(x.round_date)
@@ -14,7 +16,7 @@ def get_dates(x, test=False):
     return start_date, end_date
 
 
-def main(x, xc, gamma, delta, sigma, k, a, b, pi, impose_alpha=False, stockidx=1, nopi=0, use_k=1, test=False):
+def main(x, xc, gamma, delta, sigma, k, a, b, pi, impose_alpha=False, stockidx=1, nopi=0, use_k=1, test=False, maxiter=20):
     start_date, end_date = get_dates(x, test)
     size = (end_date.to_period(freq='Q') - start_date.to_period(freq='Q')).n + 2
     start, end = start_date.year, end_date.year
@@ -44,7 +46,7 @@ def main(x, xc, gamma, delta, sigma, k, a, b, pi, impose_alpha=False, stockidx=1
 
     model = Model(x, xc, logrf, logmk, minage, c, d, logv, mask, stockidx, use_k, start_year=to_decimal_date(start_date), sample_size=size)
     model.model_likelyhood(tpar0)
-    return model.optimize_likelyhood(tpar0, mask)
+    return model.optimize_likelyhood(tpar0, mask, maxiter=maxiter)
 
 
 if __name__ == "__main__":
@@ -59,17 +61,16 @@ if __name__ == "__main__":
     use_k, bankhand = 1, 2
     
     bootstrap_res = {}
+
     x = load_venture_data(pred=False, test=False)
     x["ddate"] = to_decimal_date(x["round_date"])
     x = x.sort_values(by=["ddate", "company_num"]).drop(columns=["ddate"]).reset_index(drop=True)
     xc = find_case(x, use_k, bankhand)
     
-    main(x, xc, gamma0, delta0, sigma0, k0, a0, b0, pi0, test=False)
-    
-    # for i in tqdm(range(N)):
-    #     x_i = x.sample(frac=0.90, replace=False)
-    #     res = main(x_i.reset_index(drop=True), xc[x_i.index], gamma0, delta0, sigma0, k0, a0, b0, pi0, test=False)
-    #     bootstrap_res[i] = res
+    for i in tqdm(range(N)):
+        x_i = x.sample(frac=0.90, replace=False)
+        res = main(x_i.reset_index(drop=True), xc[x_i.index], gamma0, delta0, sigma0, k0, a0, b0, pi0, test=False)
+        bootstrap_res[i] = res
     
     # print(bootstrap_res)
     # with open('res_bootstrap.pkl', 'wb') as file:

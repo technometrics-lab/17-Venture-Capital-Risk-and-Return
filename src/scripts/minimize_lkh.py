@@ -28,11 +28,12 @@ class Model:
                                self.c, self.d, self.logv, self.mask, self.stockidx,
                                self.dok, self.start_year, self.sample_size)
 
-    def optimize_likelyhood(self, tpar0, mask, maxiter=15):
+    def optimize_likelyhood(self, tpar0, mask, maxiter=15, verbose=True):
         self.curr_iter = 0
-        print("{0:<5}{1:<10}{2:<10}{3:<10}{4:<10}{5:<10}{6:<10}{7:<10}{8:<10}"
-              .format("iter", "gamma", "delta", "sigma", "k", "a", "b", "pi_err", "lkh"))
-        res = minimize(self.model_likelyhood, tpar0, options={'maxiter': maxiter}, callback=self.printer_callback)
+        if verbose:
+            print("{0:<5}{1:<10}{2:<10}{3:<10}{4:<10}{5:<10}{6:<10}{7:<10}{8:<10}"
+                .format("iter", "gamma", "delta", "sigma", "k", "a", "b", "pi_err", "lkh"))
+        res = minimize(self.model_likelyhood, tpar0, options={'maxiter': maxiter}, callback=self.printer_callback if verbose else None)
 
         resx, resh = res.x, res.hess_inv
         params = transform_params(*resx, mask, inv=True)
