@@ -119,7 +119,7 @@ def print_results(results, log_mk, log_rf):
     siglnr = sqrt(delta**2 * sg_mk**2 + sigma**2)
     
     er = 400*(exp(Elnr+1/2*siglnr**2)-1);
-    sdr = sqrt(200*((er/400+1)*(exp(siglnr**2)-1)))
+    sdr = 200*sqrt(((er/400+1)*(exp(siglnr**2)-1)))
     
     beta = get_beta(*results.loc['value'][:3], log_mk, log_rf)
     alpha = get_alpha(*results.loc['value'][:3], log_mk, log_rf, beta)
