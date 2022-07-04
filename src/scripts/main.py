@@ -25,6 +25,7 @@ def main(x, xc, gamma, delta, sigma, k, a, b, pi, impose_alpha=False, stockidx=1
         start = '1987-01-01'
         end = '2000-08-02'
 
+    print(f"start date: {start_date}\nend date: {end_date}")
     logrf = load_tbills_data('TB3MS', start, end)
     logmk = load_index_data('^SP500TR', start, end, '1mo', test)
 
@@ -45,9 +46,9 @@ def main(x, xc, gamma, delta, sigma, k, a, b, pi, impose_alpha=False, stockidx=1
     mask = [impose_alpha != 1, stockidx > 0, True, use_k != 0, True, True, nopi != 1]
     tpar0 = transform_params(gamma, delta, sigma, k, a, b, pi, mask)
 
-    model = Model(x, xc, logrf, logmk, minage, c, d, logv, mask, stockidx, use_k, start_year=to_decimal_date(start_date), sample_size=size)
-    model.model_likelyhood(tpar0)
-    return model.optimize_likelyhood(tpar0, mask, maxiter=maxiter)
+    # model = Model(x, xc, logrf, logmk, minage, c, d, logv, mask, stockidx, use_k, start_year=to_decimal_date(start_date), sample_size=size)
+    # model.model_likelyhood(tpar0)
+    # return model.optimize_likelyhood(tpar0, mask, maxiter=maxiter)
 
 
 if __name__ == "__main__":
@@ -77,16 +78,16 @@ if __name__ == "__main__":
     else:
         res = main(x, xc, gamma0, delta0, sigma0, k0, a0, b0, pi0, test=test)
         
-    filename = 'res'
-    if test:
-        filename += '_cochrane'
-    elif bootstrap:
-        filename += '_bootstrap'
-    elif not pred:
-        filename += '_nopred'
+    # filename = 'res'
+    # if test:
+    #     filename += '_cochrane'
+    # elif bootstrap:
+    #     filename += '_bootstrap'
+    # elif not pred:
+    #     filename += '_nopred'
         
-    with open(filename + '.pkl', 'wb') as file:
-        pickle.dump(res, file)
+    # with open(filename + '.pkl', 'wb') as file:
+    #     pickle.dump(res, file)
         
         
 

@@ -1,6 +1,6 @@
 import pandas as pd
 from tqdm import tqdm
-from numpy import exp, log, array, floor, zeros, abs, int64, float64
+from numpy import exp, log, array, floor, zeros, abs, int64, float64, sqrt
 
 
 def transform_params(gamma, delta, sigma, k, a, b, pi_err, mask, inv=False):
@@ -88,3 +88,51 @@ def check_series(series1: pd.Series, series2: pd.Series, eps: float = 1e-4) -> N
     assert series1.size == series2.size, "Series must be of the same size"
     diff = abs(series2.values - series1.values)
     assert (diff < eps).all(), f"Some values differ from more than {eps:.0e}"
+
+
+def get_beta(gamma, delta, sigma, log_mk, log_rf):
+    return exp(gamma + (delta - 1) * (log_mk.mean() - log_rf.mean())
+               + 1 / 2 * sigma ** 2 + 1 / 2 * (delta ** 2 - 1)
+               * log_mk.std() ** 2) * (exp(delta * log_mk.std() ** 2)
+            - 1) / (exp(log_mk.std() ** 2) - 1)
+
+
+def get_alpha(gamma, delta, sigma, log_mk, log_rf, beta):
+    return exp(log_rf.mean()) * (exp(gamma + delta * (log_mk.mean()
+                                 - log_rf.mean()) + 1 / 2 * delta ** 2
+                                 * log_mk.std() ** 2 + 1 / 2 * sigma
+                                 ** 2) - 1 - beta * (exp(log_mk.mean()
+                                 - log_rf.mean() + 1 / 2 * log_mk.std()
+                                 ** 2) - 1))
+    
+def print_results(results, log_mk, log_rf):
+    mu_mk = log_mk.mean()
+    sg_mk = log_mk.std()
+    mu_rf = log_rf.mean()
+    gamma, delta, sigma, k, a, b, pi = results.loc['value']
+    sdg, sdd, sds, sdk, sda, sdb, sdpi = results.loc['std']
+    print('Using parameters (annualized percentages)')
+    print(f'E[log Rf]={400*mu_rf:.2f}%, E[log Rm]={400*mu_mk:.2f}%, V[log Rm]={200*sg_mk:.2f}%')
+    
+    # mean and sd of quarterly log returns
+    Elnr = gamma + mu_rf + delta * (mu_mk - mu_rf)
+    siglnr = sqrt(delta**2 * sg_mk**2 + sigma**2)
+    
+    er = 400*(exp(Elnr+1/2*siglnr**2)-1);
+    sdr = sqrt(200*((er/400+1)*(exp(siglnr**2)-1)))
+    
+    beta = get_beta(*results.loc['value'][:3], log_mk, log_rf)
+    alpha = get_alpha(*results.loc['value'][:3], log_mk, log_rf, beta)
+    
+    implied = pd.DataFrame({'E[ln R] (%)':400*Elnr, 'SD[ln R] (%)': 200*siglnr, 'E[R] (%)': er, 'SD[R] (%)': sdr, 'alpha (%)': 400*alpha, 'beta':beta}, index=['value'])
+    params  = pd.DataFrame({
+        'gamma (%)': [400 * gamma, 400 * sdg],
+        'delta': [delta,  sdd],
+        'sigma (%)': [200 * sigma, 200 * sds],
+        'k (%)': [100 * k, 100 * sdk * k],
+        'a': [a, a * sda],
+        'b': [b, sdb],
+        'pi (%)': [100 * pi, 100 * sdpi * pi * (1 - pi)]
+    }, index=['value', 'sd'])
+    
+    return implied, params
