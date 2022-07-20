@@ -20,7 +20,7 @@ def find_likelyhood(tpars, x, xc, logrf, logmk, minage, c, d, logv, mask,
     if not mask[0]:
         if not stockidx:
             gamma = log(1 + 15 / 400) - 0.5 * sigma**2
-        elif stockidx == 1:
+        elif stockidx is not None:
             mlogrf = logrf.mean()
             mlogmk = logmk.mean()
             msigma = sigma.mean()

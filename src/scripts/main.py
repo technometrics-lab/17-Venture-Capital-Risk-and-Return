@@ -17,7 +17,7 @@ def get_dates(x, test=False):
     return start_date, end_date
 
 
-def main(x, xc, gamma, delta, sigma, k, a, b, pi, impose_alpha=False, stockidx=1, nopi=0, use_k=1, test=False, maxiter=20):
+def main(x, xc, params, impose_alpha=False, stockidx=1, nopi=0, use_k=1, test=False, maxiter=20):
     start_date, end_date = get_dates(x, test)
     size = (end_date.to_period(freq='Q') - start_date.to_period(freq='Q')).n + 2
     start, end = start_date.year, end_date.year
@@ -29,26 +29,20 @@ def main(x, xc, gamma, delta, sigma, k, a, b, pi, impose_alpha=False, stockidx=1
     logrf = load_tbills_data('TB3MS', start, end)
     logmk = load_index_data('^SP500TR', start, end, '1mo', test)
 
-    display_return_stats(x)
+    c, d = display_return_stats(x)
 
-    c = sum((x["exit_type"] == 3) & (x["exit_date"] != -99)) / sum((x["exit_type"] == 3))
     print(f'\tPercent of bankrupt have good data. Using this parameter in simulation: {c * 100:.2f}%')
-
-    good_exit = x["exit_type"].isin([1, 2, 5, 6])
-    good_date = x["exit_date"] != -99
-    good_return = x["return_usd"] > 0
-    d = (good_exit & good_date & good_return).sum() / good_exit.sum()
     print(f'\tPercent of valuations (ipo, acquired, new round) that have good data: {d * 100:.2f}%\n\n')
 
     minage = 0.25
     logv = np.arange(-7, 7.1, 0.1)
-    pi = 0 if nopi == 1 else pi
-    mask = [impose_alpha != 1, stockidx > 0, True, use_k != 0, True, True, nopi != 1]
-    tpar0 = transform_params(gamma, delta, sigma, k, a, b, pi, mask)
+    params[-1] = 0 if nopi == 1 else params[-1]
+    mask = [impose_alpha != 1, stockidx is not None, True, use_k != 0, True, True, nopi != 1]
+    tpar0 = transform_params(*params, mask)
 
-    # model = Model(x, xc, logrf, logmk, minage, c, d, logv, mask, stockidx, use_k, start_year=to_decimal_date(start_date), sample_size=size)
-    # model.model_likelyhood(tpar0)
-    # return model.optimize_likelyhood(tpar0, mask, maxiter=maxiter)
+    model = Model(x, xc, logrf, logmk, minage, c, d, logv, mask, stockidx, use_k, start_year=to_decimal_date(start_date), sample_size=size)
+    model.model_likelyhood(tpar0)
+    return model.optimize_likelyhood(tpar0, mask, maxiter=maxiter)
 
 
 if __name__ == "__main__":
@@ -60,11 +54,13 @@ if __name__ == "__main__":
     a0 = 1
     b0 = 3
     pi0 = 0.01
-    use_k, bankhand = 1, 2
+    use_k, bankhand, industry = 1, 2, ['Tech', 'Retail', 'Health', 'Other']
     
-    pred, bootstrap, test = False, False, False
+    params0 = [gamma0, delta0, sigma0, k0, a0, b0, pi0]
     
-    x = load_venture_data(pred=False, test=test)
+    pred, bootstrap, test = True, False, False
+    
+    x = load_venture_data(pred=pred, test=test)
     x["ddate"] = to_decimal_date(x["round_date"])
     x = x.sort_values(by=["ddate", "company_num"]).drop(columns=["ddate"]).reset_index(drop=True)
     xc = find_case(x, use_k, bankhand)
@@ -73,10 +69,26 @@ if __name__ == "__main__":
         res = {}
         for i in tqdm(range(N)):
             x_i = x.sample(frac=0.90, replace=False)
-            bootstrap_res = main(x_i.reset_index(drop=True), xc[x_i.index], gamma0, delta0, sigma0, k0, a0, b0, pi0, test=False)
+            bootstrap_res = main(x_i.reset_index(drop=True), xc[x_i.index], params0, test=False)
             res[i] = bootstrap_res
+    elif industry:
+        if not isinstance(industry, list):
+            industry = [industry]
+            
+        for ind in industry:
+            x_i = x[x.group_num == ind]
+            print(f'Running model for industry: [{ind}]')
+            res = main(x_i.reset_index(drop=True), xc[x_i.index], params0, test=test)
+            
+            filename = 'res_' + ind + '.pkl'
+            with open(filename + '.pkl', 'wb') as file:
+                pickle.dump(res, file)
+            
     else:
-        res = main(x, xc, gamma0, delta0, sigma0, k0, a0, b0, pi0, test=test)
+        res = main(x, xc, params0, test=test)
+        
+        
+    print()
         
     # filename = 'res'
     # if test:

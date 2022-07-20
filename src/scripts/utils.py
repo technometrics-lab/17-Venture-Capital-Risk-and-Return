@@ -40,25 +40,33 @@ def to_decimal_date(date):
     return y + (m - 1) / 12 + (d - 1) / 365
 
 
-def display_return_stats(x):
-    fi = sum(x["exit_type"] == 1) / x.shape[0] * 100
-    fa = sum(x["exit_type"] == 2) / x.shape[0] * 100
-    fb = sum(x["exit_type"] == 3) / x.shape[0] * 100
-    freg = sum(x["exit_type"] == 5) / x.shape[0] * 100
-    fp = sum(x["exit_type"] == 4) / x.shape[0] * 100
-    fsr = sum(x["exit_type"] == 6) / x.shape[0] * 100
-    fu = 100 - (fi + fa + fb + freg + fp + fsr)
+def display_return_stats(x, disp=True):
+    if disp:
+        fi = sum(x["exit_type"] == 1) / x.shape[0] * 100
+        fa = sum(x["exit_type"] == 2) / x.shape[0] * 100
+        fb = sum(x["exit_type"] == 3) / x.shape[0] * 100
+        freg = sum(x["exit_type"] == 5) / x.shape[0] * 100
+        fp = sum(x["exit_type"] == 4) / x.shape[0] * 100
+        fsr = sum(x["exit_type"] == 6) / x.shape[0] * 100
+        fu = 100 - (fi + fa + fb + freg + fp + fsr)
 
-    print(f"number of observations: {x.shape[0]}")
-    print(('Note: following refers to round, not company.\n'
-           'Round may end in another round, though company eventually goes public'))
-    print(f'\tPercent bankrupt: {fb:.2f}%')
-    print(f'\tPercent ipo: {fi:.2f}%')
-    print(f'\tPercent acquired: {fa:.2f}%')
-    print(f'\tPercent with subsequent round: {fsr:.2f}%')
-    print(f'\tPercent Private: {fp:.2f}%')
-    print(f'\tPercent Ipo registered: {freg:.2f}%')
-    print(f'\tPercent fate unknown: {fu:.2f}%')
+        print(f"number of observations: {x.shape[0]}")
+        print(('Note: following refers to round, not company.\n'
+            'Round may end in another round, though company eventually goes public'))
+        print(f'\tPercent bankrupt: {fb:.2f}%')
+        print(f'\tPercent ipo: {fi:.2f}%')
+        print(f'\tPercent acquired: {fa:.2f}%')
+        print(f'\tPercent with subsequent round: {fsr:.2f}%')
+        print(f'\tPercent Private: {fp:.2f}%')
+        print(f'\tPercent Ipo registered: {freg:.2f}%')
+        print(f'\tPercent fate unknown: {fu:.2f}%')
+    
+    c = sum((x["exit_type"] == 3) & (x["exit_date"] != -99)) / sum((x["exit_type"] == 3))
+    good_exit = x["exit_type"].isin([1, 2, 5, 6])
+    good_date = x["exit_date"] != -99
+    good_return = x["return_usd"] > 0
+    d = (good_exit & good_date & good_return).sum() / good_exit.sum()
+    return c, d
 
 
 def find_case(data, use_k, bankhand):
@@ -112,19 +120,26 @@ def print_results(results, log_mk, log_rf):
     gamma, delta, sigma, k, a, b, pi = results.loc['value']
     sdg, sdd, sds, sdk, sda, sdb, sdpi = results.loc['std']
     print('Using parameters (annualized percentages)')
-    print(f'E[log Rf]={400*mu_rf:.2f}%, E[log Rm]={400*mu_mk:.2f}%, V[log Rm]={200*sg_mk:.2f}%')
+    print(f'E[log Rf]={400 * mu_rf:.2f}%, E[log Rm]={400 * mu_mk:.2f}%, V[log Rm]={200 * sg_mk:.2f}%')
     
     # mean and sd of quarterly log returns
-    Elnr = gamma + mu_rf + delta * (mu_mk - mu_rf)
-    siglnr = sqrt(delta**2 * sg_mk**2 + sigma**2)
+    elnr = gamma + mu_rf + delta * (mu_mk - mu_rf)
+    sdlnr = sqrt(delta**2 * sg_mk**2 + sigma**2)
     
-    er = 400*(exp(Elnr+1/2*siglnr**2)-1);
-    sdr = 200*sqrt(((er/400+1)*(exp(siglnr**2)-1)))
+    er = 400 * (exp(elnr + sdlnr**2 / 2) - 1);
+    sdr = 200 * sqrt(((er / 400 + 1) * (exp(sdlnr**2) - 1)))
     
     beta = get_beta(*results.loc['value'][:3], log_mk, log_rf)
     alpha = get_alpha(*results.loc['value'][:3], log_mk, log_rf, beta)
     
-    implied = pd.DataFrame({'E[ln R] (%)':400*Elnr, 'SD[ln R] (%)': 200*siglnr, 'E[R] (%)': er, 'SD[R] (%)': sdr, 'alpha (%)': 400*alpha, 'beta':beta}, index=['value'])
+    implied = pd.DataFrame({
+        'E[ln R] (%)':400 * elnr, 
+        'SD[ln R] (%)': 200 * sdlnr, 
+        'E[R] (%)': er, 
+        'SD[R] (%)': sdr, 
+        'alpha (%)': 400 * alpha, 
+        'beta': beta}, index=['value'])
+    
     params  = pd.DataFrame({
         'gamma (%)': [400 * gamma, 400 * sdg],
         'delta': [delta,  sdd],

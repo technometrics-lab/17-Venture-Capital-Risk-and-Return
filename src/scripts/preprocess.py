@@ -32,14 +32,14 @@ def load_tbills_data(series_id: str = None, start=None, end=None, freq: str = No
     return logrf
 
 
-def load_venture_data(roundret: int = 0, round_code: int = 0, industry_code=None, test=False, pred=True):
+def load_venture_data(roundret: int = 0, round_code: int = 0, industry_code=None, test=False, pred=True, prefix='./'):
     if not test:
         if pred:
             print('loading full dataset')
-            data = pd.read_csv('./data/data.csv', parse_dates=['round_date', 'exit_date'])
+            data = pd.read_csv(prefix+'data/data.csv', parse_dates=['round_date', 'exit_date'])
         else:
             print('loading no predictions dataset')
-            data = pd.read_csv('./data/data_nopred.csv', parse_dates=['round_date', 'exit_date'])
+            data = pd.read_csv(prefix+'/data/data_nopred.csv', parse_dates=['round_date', 'exit_date'])
         end_year = max(data.round_date).year
         data.exit_date = pd.to_datetime(data.exit_date, errors="coerce")
         data.round_date = pd.to_datetime(data.round_date, errors="coerce")
