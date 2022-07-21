@@ -13,20 +13,12 @@ def sim(gamma, delta, sigma, k, a, b, c, d, pi_err, start, logrf, logmk, logv, s
 
     T = sample_size - start - 1
     N = logv.shape[0]
-
-    if big:
-        prob_ipo_obs = np.zeros((T, N))
-        prob_ipo_hid = np.zeros((T, N))
-        prob_bkp_obs = np.zeros((T, N))
-        prob_bkp_hid = np.zeros((T, N))
-        prob_pvt = np.zeros((T, N))
-    else:
-        prob_ipo_obs = np.zeros((T, N))
-        prob_ipo_hid = np.zeros(T)
-        prob_bkp_obs = np.zeros(T)
-        prob_bkp_hid = np.zeros(T)
-        prob_pvt = np.zeros(T)
-
+        
+    prob_ipo_obs = np.zeros((T, N))
+    prob_ipo_hid = np.zeros(T)
+    prob_bkp_obs = np.zeros(T)
+    prob_bkp_hid = np.zeros(T)
+    prob_pvt = np.zeros(T)
     prob_lnV = np.zeros((N, N))
 
     val_min = logv[0]
@@ -74,23 +66,16 @@ def sim(gamma, delta, sigma, k, a, b, c, d, pi_err, start, logrf, logmk, logv, s
         prob_private = prob_val * (1 - prob_exit) * (1 - prob_bank)
 
         prob_ipo_obs[t, :] = (1 - pi_err) * d * phadip + pi_err * d * phadip.mean()
-        if big:
-            prob_ipo_hid[t, :] = (1 - d) * phadip
-            prob_bkp_obs[t, :] = c * phadbk
-            prob_bkp_hid[t, :] = (1 - c) * phadbk
-            prob_pvt[t, :] = prob_private
-        else:
-            prob_ipo_hid[t] = ((1 - d) * phadip).sum()
-            prob_bkp_obs[t] = (c * phadbk).sum()
-            prob_bkp_hid[t] = ((1 - c) * phadbk).sum()
-            prob_pvt[t] = prob_private.sum()
+        prob_ipo_hid[t] = ((1 - d) * phadip).sum()
+        prob_bkp_obs[t] = (c * phadbk).sum()
+        prob_bkp_hid[t] = ((1 - c) * phadbk).sum()
+        prob_pvt[t] = prob_private.sum()
 
     prob_ipo_obs /= 1e4
     prob_bkp_hid /= 1e4
     prob_bkp_obs /= 1e4
     prob_ipo_hid /= 1e4
     prob_pvt /= 1e4
-
     # probsum = prob_pvt[-1] + prob_ipo_obs.sum() + prob_ipo_hid.sum() + prob_bkp_obs.sum() + prob_bkp_hid.sum()
     # assert abs(probsum - 1) < 1e-6, f"sim3 ERROR: Probabilities sum to more or less than one ({probsum:.4f})"
     return prob_pvt, prob_ipo_obs, prob_ipo_hid, prob_bkp_obs, prob_bkp_hid

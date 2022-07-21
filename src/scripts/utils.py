@@ -45,21 +45,15 @@ def display_return_stats(x, disp=True):
         fi = sum(x["exit_type"] == 1) / x.shape[0] * 100
         fa = sum(x["exit_type"] == 2) / x.shape[0] * 100
         fb = sum(x["exit_type"] == 3) / x.shape[0] * 100
-        freg = sum(x["exit_type"] == 5) / x.shape[0] * 100
         fp = sum(x["exit_type"] == 4) / x.shape[0] * 100
         fsr = sum(x["exit_type"] == 6) / x.shape[0] * 100
-        fu = 100 - (fi + fa + fb + freg + fp + fsr)
 
-        print(f"number of observations: {x.shape[0]}")
-        print(('Note: following refers to round, not company.\n'
-            'Round may end in another round, though company eventually goes public'))
-        print(f'\tPercent bankrupt: {fb:.2f}%')
-        print(f'\tPercent ipo: {fi:.2f}%')
-        print(f'\tPercent acquired: {fa:.2f}%')
-        print(f'\tPercent with subsequent round: {fsr:.2f}%')
-        print(f'\tPercent Private: {fp:.2f}%')
-        print(f'\tPercent Ipo registered: {freg:.2f}%')
-        print(f'\tPercent fate unknown: {fu:.2f}%')
+        print(f"Number of observations: {x.shape[0]}")
+        print(f'Bankrupt: {fb:.2f}%')
+        print(f'Ipo: {fi:.2f}%')
+        print(f'Acquired: {fa:.2f}%')
+        print(f'Subsequent round: {fsr:.2f}%')
+        print(f'Private: {fp:.2f}%')
     
     c = sum((x["exit_type"] == 3) & (x["exit_date"] != -99)) / sum((x["exit_type"] == 3))
     good_exit = x["exit_type"].isin([1, 2, 5, 6])
@@ -72,8 +66,7 @@ def display_return_stats(x, disp=True):
 def find_case(data, use_k, bankhand):
     cases = zeros(data.shape[0])
     data = data.reset_index()
-    print("Finding category for each observation")
-    for index, row in tqdm(data.iterrows(), total=data.shape[0]):
+    for index, row in tqdm(data.iterrows(), total=data.shape[0], desc='Finding observation cases'):
         if (row["exit_type"] in [1, 2, 6]) and (row["exit_date"] != -99) and (row["return_usd"] > 0):
             cases[index] = 1
         elif (row["exit_type"] in [1, 2, 5, 6]) and (row["exit_date"] != -99):
@@ -113,14 +106,15 @@ def get_alpha(gamma, delta, sigma, log_mk, log_rf, beta):
                                  - log_rf.mean() + 1 / 2 * log_mk.std()
                                  ** 2) - 1))
     
-def print_results(results, log_mk, log_rf):
+def print_results(results, log_mk, log_rf, disp=True):
     mu_mk = log_mk.mean()
     sg_mk = log_mk.std()
     mu_rf = log_rf.mean()
     gamma, delta, sigma, k, a, b, pi = results.loc['value']
     sdg, sdd, sds, sdk, sda, sdb, sdpi = results.loc['std']
-    print('Using parameters (annualized percentages)')
-    print(f'E[log Rf]={400 * mu_rf:.2f}%, E[log Rm]={400 * mu_mk:.2f}%, V[log Rm]={200 * sg_mk:.2f}%')
+    if disp:
+        print('Using parameters (annualized percentages)')
+        print(f'E[log Rf]={400 * mu_rf:.2f}%, E[log Rm]={400 * mu_mk:.2f}%, V[log Rm]={200 * sg_mk:.2f}%')
     
     # mean and sd of quarterly log returns
     elnr = gamma + mu_rf + delta * (mu_mk - mu_rf)
