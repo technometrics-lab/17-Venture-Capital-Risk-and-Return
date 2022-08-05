@@ -1,0 +1,16 @@
+model_id,rank,ensemble_weight,type,cost
+12,1,0.1,HistGradientBoostingRegressor,0.5474910470473767
+15,2,0.1,HistGradientBoostingRegressor,0.5812473061637762
+16,3,0.04,KNeighborsRegressor,0.7580565006686811
+19,4,0.02,LinearSVR,1.0513239906556506
+2,5,0.22,RandomForestRegressor,0.5287503247893257
+32,6,0.02,KNeighborsRegressor,0.6689491561442753
+35,7,0.02,ARDRegression,0.5774340053737957
+42,8,0.04,KNeighborsRegressor,0.8134763865369697
+46,9,0.02,HistGradientBoostingRegressor,0.573501450719104
+48,10,0.02,HistGradientBoostingRegressor,0.6192055900414036
+54,11,0.02,HistGradientBoostingRegressor,0.556074613670298
+61,12,0.02,HistGradientBoostingRegressor,0.5858926378398585
+68,13,0.22,HistGradientBoostingRegressor,0.5476822570285232
+77,14,0.12,DecisionTreeRegressor,0.5843018187097863
+81,15,0.02,RandomForestRegressor,0.5279775584583778

@@ -5,7 +5,7 @@ from scripts.sim import sim
 
 
 def find_likelyhood(tpars, x, xc, logrf, logmk, minage, c, d, logv, mask,
-                    stockidx, use_k, start_year=1987, sample_size=54):
+                    stockidx, use_k, start_year=1987, sample_size=54, info=None):
 
     xlo = transform_params(-1, -10, 0.1, 0.01, 0.1, 0.1, 1e-6, mask)
     xhi = transform_params(1, 10, 5, 1.5, 10, 10, 1 - 1e-6, mask)
@@ -73,6 +73,14 @@ def find_likelyhood(tpars, x, xc, logrf, logmk, minage, c, d, logv, mask,
             return np.inf
 
     lk = - lk + penalty
+    
+    if info is not None:
+        if info['nfeval'] % 1 == 0:
+            niter = info['nfeval']
+            print((f'{niter:<5}{gamma:<10.4f}{delta:<10.4f}{sigma:<10.4f}{k:<10.4f}'
+                f'{a:<10.4f}{b:<10.4f}{pi_err:<10.4f}{lk:<10.4f}'))
+        info['nfeval'] += 1
+        
     return lk
 
 

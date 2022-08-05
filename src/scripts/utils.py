@@ -1,4 +1,5 @@
 import pandas as pd
+import numpy as np
 from tqdm import tqdm
 from numpy import exp, log, array, floor, zeros, abs, int64, float64, sqrt
 
@@ -46,13 +47,11 @@ def display_return_stats(x, disp=True):
         fa = sum(x["exit_type"] == 2) / x.shape[0] * 100
         fb = sum(x["exit_type"] == 3) / x.shape[0] * 100
         fp = sum(x["exit_type"] == 4) / x.shape[0] * 100
-        fsr = sum(x["exit_type"] == 6) / x.shape[0] * 100
 
         print(f"Number of observations: {x.shape[0]}")
         print(f'Bankrupt: {fb:.2f}%')
         print(f'Ipo: {fi:.2f}%')
         print(f'Acquired: {fa:.2f}%')
-        print(f'Subsequent round: {fsr:.2f}%')
         print(f'Private: {fp:.2f}%')
     
     c = sum((x["exit_type"] == 3) & (x["exit_date"] != -99)) / sum((x["exit_type"] == 3))
@@ -73,11 +72,11 @@ def find_case(data, use_k, bankhand):
             cases[index] = 2
         elif row["exit_type"] in [1, 2, 5, 6]:
             cases[index] = 3
-        elif (row["exit_type"] == 4) or ((row["exit_type"] == 3) and (use_k == 0)):
+        elif (row["exit_type"] == 4) or ((row["exit_type"] == 3) and (not use_k)):
             cases[index] = 4
-        elif (row["exit_type"] == 3) and (row["exit_date"] != -99) and (bankhand == 2) and (use_k == 1):
+        elif (row["exit_type"] == 3) and (row["exit_date"] != -99) and bankhand and use_k:
             cases[index] = 5.3
-        elif (row["exit_type"] == 3) and (row["round_date"] != -99) and (use_k == 1):
+        elif (row["exit_type"] == 3) and (row["round_date"] != -99) and use_k:
             cases[index] = 6
         else:
             print(row)
@@ -120,19 +119,18 @@ def print_results(results, log_mk, log_rf, disp=True):
     elnr = gamma + mu_rf + delta * (mu_mk - mu_rf)
     sdlnr = sqrt(delta**2 * sg_mk**2 + sigma**2)
     
-    er = 400 * (exp(elnr + sdlnr**2 / 2) - 1);
+    er = 400 * (exp(elnr + sdlnr**2 / 2) - 1)
     sdr = 200 * sqrt(((er / 400 + 1) * (exp(sdlnr**2) - 1)))
     
     beta = get_beta(*results.loc['value'][:3], log_mk, log_rf)
     alpha = get_alpha(*results.loc['value'][:3], log_mk, log_rf, beta)
     
     implied = pd.DataFrame({
-        'E[ln R] (%)':400 * elnr, 
-        'SD[ln R] (%)': 200 * sdlnr, 
-        'E[R] (%)': er, 
-        'SD[R] (%)': sdr, 
-        'alpha (%)': 400 * alpha, 
-        'beta': beta}, index=['value'])
+        'E[ln R] (%)': [400 * elnr,  200 * sdlnr],
+        'E[R] (%)': [er, sdr],
+        'alpha (%)': [400 * alpha, np.nan], 
+        'beta': [beta, np.nan]
+        }, index=['value', 'std'])
     
     params  = pd.DataFrame({
         'gamma (%)': [400 * gamma, 400 * sdg],

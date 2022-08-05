@@ -5,12 +5,12 @@ from scripts.market_api import get_yfinance_time_series, get_fred_time_series
 from scripts.utils import *
 
 
-def load_index_data(ticker: str = None, start=None, end=None, freq: str = None, test=False):
+def load_index_data(ticker: str = None, start=None, end=None, freq: str = None, test=False, prefix=''):
     if test:
-        idx = pd.read_csv('data/cochrane_data/sptr.csv')['data'][::3]
+        idx = pd.read_csv(prefix+'data/cochrane_data/sptr.csv')['data'][::3]
     else:
         if (start is None) and (end is None):
-            data = pd.read_csv('./data/cochrane_data/sptr.csv')
+            data = pd.read_csv(prefix+'data/cochrane_data/sptr.csv')
             idx = data['data']
         else:
             assert ticker is not None, "Ticker must be specified when fetching from API"
@@ -35,15 +35,19 @@ def load_tbills_data(series_id: str = None, start=None, end=None, freq: str = No
     return logrf
 
 
-def load_venture_data(roundret: int = 0, round_code: int = 0, industry_code=None, test=False, pred=True, prefix='./'):
+def load_venture_data(roundret: int = 0, round_code: int = 0, industry_code=None, filepath=None, test=False, prefix='./data/', to_date=None, from_date=None):
+    assert test or filepath
     if not test:
-        if pred:
-            print('Loading full dataset...', end=' ')
-            data = pd.read_csv(prefix+'data/data.csv', parse_dates=['round_date', 'exit_date'])
-            print('Done.')
-        else:
-            print('loading no predictions dataset')
-            data = pd.read_csv(prefix+'/data/data_nopred_full.csv', parse_dates=['round_date', 'exit_date'])
+        print(f'Loading {filepath} dataset...', end=' ')
+        data = pd.read_csv(prefix+filepath, parse_dates=['round_date', 'exit_date'])
+        print('Done.')
+        
+        if to_date is not None:
+            before = (data.round_date <= pd.to_datetime(to_date)) & ((data.exit_date <= pd.to_datetime(to_date)) | data.exit_date.isna())
+            data = data[before].reset_index(drop=True)
+        if from_date is not None:
+            after = (data.round_date >= pd.to_datetime(from_date)) & ((data.exit_date >= pd.to_datetime(from_date)) | data.exit_date.isna())
+            data = data[after].reset_index(drop=True)
         end_year = max(data.round_date).year
         data.exit_date = pd.to_datetime(data.exit_date, errors="coerce")
         data.round_date = pd.to_datetime(data.round_date, errors="coerce")
@@ -84,6 +88,6 @@ def load_venture_data(roundret: int = 0, round_code: int = 0, industry_code=None
 
     data = data.fillna(-99)
     # discard super-extreme returns: hand-checked incorrect values
-    data = data[(data["return_usd"] <= 300)]
+    # data = data[(data["return_usd"] <= 300)]
 
     return data.reset_index(drop=True)

@@ -1,6 +1,7 @@
 from numpy import diag, array, sqrt
 from pandas import DataFrame
-from scipy.optimize import minimize
+import scipy
+from scipy.optimize import minimize, LbfgsInvHessProduct
 
 from scripts.findlkh import find_likelyhood
 from scripts.utils import transform_params
@@ -23,19 +24,25 @@ class Model:
         self.sample_size = sample_size
         self.curr_iter = 0
 
-    def model_likelyhood(self, tpars):
+    def model_likelyhood(self, tpars, info):
         return find_likelyhood(tpars, self.x, self.xc, self.logrf, self.logmk, self.minage,
                                self.c, self.d, self.logv, self.mask, self.stockidx,
-                               self.dok, self.start_year, self.sample_size)
+                               self.dok, self.start_year, self.sample_size, info)
 
     def optimize_likelyhood(self, tpar0, mask, maxiter=15, verbose=True):
         self.curr_iter = 0
+        # [     gamma,         delta,        sigma,     k,         a,            b,            pi]
+        bnds = ((None, None), (None, None), (0, None), (0, None), (None, None), (None, None), (0, 1))
+        cb = self.printer_callback if verbose else None
         if verbose:
             print("{0:<5}{1:<10}{2:<10}{3:<10}{4:<10}{5:<10}{6:<10}{7:<10}{8:<10}"
                 .format("iter", "gamma", "delta", "sigma", "k", "a", "b", "pi_err", "lkh"))
-        res = minimize(self.model_likelyhood, tpar0, options={'maxiter': maxiter}, callback=self.printer_callback if verbose else None)
-
-        resx, resh = res.x, res.hess_inv
+        res = minimize(self.model_likelyhood, tpar0, options={'maxiter': maxiter}, args=({'nfeval':0}))
+        
+        if isinstance(res.hess_inv, LbfgsInvHessProduct):
+            resx, resh = res.x, res.hess_inv.todense()
+        else:
+            resx, resh = res.x, res.hess_inv
         params = transform_params(*resx, mask, inv=True)
         labels = array(['gamma', 'delta', 'sigma', 'k', 'a', 'b', 'pi_err'])[mask]
 

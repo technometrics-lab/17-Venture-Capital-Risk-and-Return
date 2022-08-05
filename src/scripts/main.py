@@ -17,7 +17,7 @@ def get_dates(x, test=False):
     return start_date, end_date
 
 
-def main(x, xc, params, impose_alpha=False, stockidx=1, nopi=0, use_k=1, test=False, maxiter=30):
+def start_opti(x, xc, params, impose_alpha=False, stockidx=1, nopi=0, use_k=1, test=False, maxiter=30, index='^SP500TR'):
     start_date, end_date = get_dates(x, test)
     size = (end_date.to_period(freq='Q') - start_date.to_period(freq='Q')).n + 2
     start = start_date.strftime('%Y-%m-%d')
@@ -27,8 +27,9 @@ def main(x, xc, params, impose_alpha=False, stockidx=1, nopi=0, use_k=1, test=Fa
         start = '1987-01-01'
         end = '2000-08-02'
 
+    print(f'start: {start}, end: {end}')
     logrf = load_tbills_data('TB3MS', start, end)
-    logmk = load_index_data('^SP500TR', start, end, '1mo', test)
+    logmk = load_index_data(index, start, end, '1mo', test)
 
     c, d = display_return_stats(x)
 
@@ -44,65 +45,87 @@ def main(x, xc, params, impose_alpha=False, stockidx=1, nopi=0, use_k=1, test=Fa
     return model.optimize_likelyhood(tpar0, mask, maxiter=maxiter)
 
 
-if __name__ == "__main__":
-    N = 50
-    gamma0 = 0.01
-    delta0 = 1.5
-    sigma0 = 0.9
-    k0 = 0.1
-    a0 = 1
-    b0 = 3
-    pi0 = 0.01
+def save_results(results, from_date, to_date, industry, test, bootstrap, pred, index):
+    filename = 'src/results/res_'
+    if not pred:
+        filename += '_' + 'no_pred'
+    if from_date is not None:
+        filename += 'from_' + from_date[:4]
+    if to_date is not None:
+        filename += 'to_' + to_date[:4]
+    if industry is not None:
+        filename += '_' + industry.lower()
+    if test:
+        filename += '_' + 'cochrane'
+    if bootstrap:
+        filename += '_' + 'bootstrap'
+    if index:
+        filename += '_' + index
     
-    use_k, bankhand, industry = 1, 2, None #['Tech', 'Retail', 'Health', 'Other']
-    pred, bootstrap, test = True, False, False
+    with open(filename + '.pkl', 'wb') as file:
+        pickle.dump(results, file)
+        
+        
+def bootstrap(x, xc, params0, n_bstrap, test, index):
+    res = {}
+    for i in tqdm(range(n_bstrap)):
+        x_i = x.sample(frac=0.90, replace=False)
+        start_date, end_date = get_dates(x_i, False)
+        bootstrap_res = start_opti(x_i.reset_index(drop=True), xc[x_i.index], params0, test=test, index=index)
+        res[i] = {'start': start_date, 'end': end_date, 'res': bootstrap_res}
+    return res
+
+
+def main(filepath, params0=None, from_date=None, to_date=None, industries=None, test=False, bootstrap=False, 
+         pred=True, use_k=True, use_bkp=True, n_bstrap=100, maxiter=30, index='^SP500TR'):
     
-    params0 = [gamma0, delta0, sigma0, k0, a0, b0, pi0]
-    
-    x = load_venture_data(pred=pred, test=test)
+    if params0 is None:
+        gamma0 = 0.01
+        delta0 = 1
+        sigma0 = 0.9
+        k0 = 0.1
+        a0 = 1
+        b0 = 8
+        pi0 = 0.1
+        
+        params0 = [gamma0, delta0, sigma0, k0, a0, b0, pi0]
+    else:
+        assert len(params0) == 7
+        
+    x = load_venture_data(filepath=filepath, from_date=from_date, to_date=to_date, test=test)
     x["ddate"] = to_decimal_date(x["round_date"])
     x = x.sort_values(by=["ddate", "company_num"]).drop(columns=["ddate"]).reset_index(drop=True)
-    xc = find_case(x, use_k, bankhand)
+    xc = find_case(x, use_k, use_bkp)
     
-    if bootstrap:
-        res = {}
-        start_date, end_date = get_dates(x, False)
-        for i in tqdm(range(N)):
-            x_i = x.sample(frac=0.90, replace=False)
-            bootstrap_res = main(x_i.reset_index(drop=True), xc[x_i.index], params0, test=False)
-            res[i] = bootstrap_res
-    elif industry:
-        if not isinstance(industry, list):
-            industry = [industry]
+    if industries:
+        if not isinstance(industries, list):
+            industries = [industries]
             
-        for ind in industry:
-            x_i = x[x.group_num == ind]
-            print(f'Running model for industry: {ind}')
+        for industry in industries:
+            x_i = x[x.group_num == industry]
+            print(f'Running model for industry: {industry}')
             start_date, end_date = get_dates(x_i, False)
-            res = main(x_i.reset_index(drop=True), xc[x_i.index], params0, test=test)
-            res = {'start': start_date, 'end': end_date, 'res': res}
             
-            filename = 'res_' + ind
-            with open(filename + '.pkl', 'wb') as file:
-                pickle.dump(res, file)
+            if bootstrap:
+                res = bootstrap(x_i.reset_index(drop=True), xc[x_i.index], params0, n_bstrap, test, index)
+            else:
+                res = start_opti(x_i.reset_index(drop=True), xc[x_i.index], params0, test=test, maxiter=maxiter, index=index)
+                res = {'start': start_date, 'end': end_date, 'res': res}
+            
+            save_results(res, from_date, to_date, industry, test, bootstrap, pred, index)
         exit()
     else:
-        start_date, end_date = get_dates(x, test)
-        res = main(x, xc, params0, test=test)
+        if bootstrap:
+            res = bootstrap(x, xc, params0, n_bstrap, test)
+        else:
+            res = start_opti(x, xc, params0, test=test, maxiter=maxiter, index=index)
+            res = {'start': start_date, 'end': end_date, 'res': res}
+        
+    save_results(res, from_date, to_date, None, test, bootstrap, pred, index)
 
-        
-    res = {'start': start_date, 'end': end_date, 'res': res}
-    filename = 'res'
-    if test:
-        filename += '_cochrane'
-    elif bootstrap:
-        filename += '_bootstrap'
-    elif not pred:
-        filename += '_nopred'
-        
-    with open(filename + '.pkl', 'wb') as file:
-        pickle.dump(res, file)
-        
+
+if __name__ == "__main__":
+    main('data.csv', from_date='2010-01-01', index='^IXIC')
         
 
 ###### TODO #######
