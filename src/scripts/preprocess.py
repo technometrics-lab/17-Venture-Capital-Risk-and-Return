@@ -38,9 +38,7 @@ def load_tbills_data(series_id: str = None, start=None, end=None, freq: str = No
 def load_venture_data(roundret: int = 0, round_code: int = 0, industry_code=None, filepath=None, test=False, prefix='./data/', to_date=None, from_date=None):
     assert test or filepath
     if not test:
-        print(f'Loading {filepath} dataset...', end=' ')
         data = pd.read_csv(prefix+filepath, parse_dates=['round_date', 'exit_date'])
-        print('Done.')
         
         if to_date is not None:
             before = (data.round_date <= pd.to_datetime(to_date)) & ((data.exit_date <= pd.to_datetime(to_date)) | data.exit_date.isna())
@@ -52,7 +50,6 @@ def load_venture_data(roundret: int = 0, round_code: int = 0, industry_code=None
         data.exit_date = pd.to_datetime(data.exit_date, errors="coerce")
         data.round_date = pd.to_datetime(data.round_date, errors="coerce")
     else:
-        print('loading cochrane dataset')
         data = pd.read_csv(prefix+'/data/cochrane_data/returns.csv')
         end_year = 2000
 

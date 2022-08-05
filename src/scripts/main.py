@@ -27,13 +27,10 @@ def start_opti(x, xc, params, impose_alpha=False, stockidx=1, nopi=0, use_k=1, t
         start = '1987-01-01'
         end = '2000-08-02'
 
-    print(f'start: {start}, end: {end}')
     logrf = load_tbills_data('TB3MS', start, end)
     logmk = load_index_data(index, start, end, '1mo', test)
 
     c, d = display_return_stats(x)
-
-    print(f'Percent of valuations (ipo, acquired, new round) that have good data: {d * 100:.2f}%\n\n')
 
     minage = 0.25
     logv = np.arange(-7, 7.1, 0.1)
@@ -92,6 +89,9 @@ def main(filepath, params0=None, from_date=None, to_date=None, industries=None, 
     else:
         assert len(params0) == 7
         
+    print(f"{' INFO ':=^60}")
+    print(f"Dataset info{filepath:>48}")
+    
     x = load_venture_data(filepath=filepath, from_date=from_date, to_date=to_date, test=test)
     x["ddate"] = to_decimal_date(x["round_date"])
     x = x.sort_values(by=["ddate", "company_num"]).drop(columns=["ddate"]).reset_index(drop=True)
@@ -103,8 +103,10 @@ def main(filepath, params0=None, from_date=None, to_date=None, industries=None, 
             
         for industry in industries:
             x_i = x[x.group_num == industry]
-            print(f'Running model for industry: {industry}')
+            print(f"Industry{industry:>52}")
             start_date, end_date = get_dates(x_i, False)
+            print(f"Start date{start_date.strftime('%Y-%m-%d'):>50}")
+            print(f"End date{end_date.strftime('%Y-%m-%d'):>52}")
             
             if bootstrap:
                 res = bootstrap(x_i.reset_index(drop=True), xc[x_i.index], params0, n_bstrap, test, index)
@@ -118,6 +120,10 @@ def main(filepath, params0=None, from_date=None, to_date=None, industries=None, 
         if bootstrap:
             res = bootstrap(x, xc, params0, n_bstrap, test)
         else:
+            start_date, end_date = get_dates(x, False)
+            print(f"Industry{'None':>52}")
+            print(f"Start date{start_date.strftime('%Y-%m-%d'):>50}")
+            print(f"End date{end_date.strftime('%Y-%m-%d'):>52}")
             res = start_opti(x, xc, params0, test=test, maxiter=maxiter, index=index)
             res = {'start': start_date, 'end': end_date, 'res': res}
         
@@ -125,7 +131,23 @@ def main(filepath, params0=None, from_date=None, to_date=None, industries=None, 
 
 
 if __name__ == "__main__":
-    main('data.csv', from_date='2010-01-01', index='^IXIC')
+    index = '^SP500TR'
+    main('data.csv', from_date='2010-01-01', index=index)
+    main('data.csv', from_date='2010-01-01', industries=['Tech', 'Retail', 'Health', 'Other'], index=index)
+    main('data.csv', from_date='2010-01-01', bootstrap=True, index=index)
+    main('data.csv', from_date='2010-01-01', industries=['Tech', 'Retail', 'Health', 'Other'], bootstrap=True, n_bstrap=10, index=index)
+    
+    index = '^IXIC'
+    main('data.csv', from_date='2010-01-01', index=index)
+    main('data.csv', from_date='2010-01-01', industries=['Tech', 'Retail', 'Health', 'Other'], index=index)
+    main('data.csv', from_date='2010-01-01', bootstrap=True, index=index)
+    main('data.csv', from_date='2010-01-01', industries=['Tech', 'Retail', 'Health', 'Other'], bootstrap=True, n_bstrap=10, index=index)
+    
+    index = '^RUT'
+    main('data.csv', from_date='2010-01-01', index=index)
+    main('data.csv', from_date='2010-01-01', industries=['Tech', 'Retail', 'Health', 'Other'], index=index)
+    main('data.csv', from_date='2010-01-01', bootstrap=True, index=index)
+    main('data.csv', from_date='2010-01-01', industries=['Tech', 'Retail', 'Health', 'Other'], bootstrap=True, n_bstrap=10, index=index)
         
 
 ###### TODO #######

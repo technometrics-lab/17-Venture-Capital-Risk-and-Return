@@ -42,30 +42,34 @@ def to_decimal_date(date):
 
 
 def display_return_stats(x, disp=True):
-    if disp:
-        fi = sum(x["exit_type"] == 1) / x.shape[0] * 100
-        fa = sum(x["exit_type"] == 2) / x.shape[0] * 100
-        fb = sum(x["exit_type"] == 3) / x.shape[0] * 100
-        fp = sum(x["exit_type"] == 4) / x.shape[0] * 100
-
-        print(f"Number of observations: {x.shape[0]}")
-        print(f'Bankrupt: {fb:.2f}%')
-        print(f'Ipo: {fi:.2f}%')
-        print(f'Acquired: {fa:.2f}%')
-        print(f'Private: {fp:.2f}%')
-    
     c = sum((x["exit_type"] == 3) & (x["exit_date"] != -99)) / sum((x["exit_type"] == 3))
     good_exit = x["exit_type"].isin([1, 2, 5, 6])
     good_date = x["exit_date"] != -99
     good_return = x["return_usd"] > 0
     d = (good_exit & good_date & good_return).sum() / good_exit.sum()
+    
+    if disp:
+        fi = sum(x["exit_type"] == 1) / x.shape[0] * 100
+        fa = sum(x["exit_type"] == 2) / x.shape[0] * 100
+        fb = sum(x["exit_type"] == 3) / x.shape[0] * 100
+        fp = sum(x["exit_type"] == 4) / x.shape[0] * 100
+        
+        print('-'*60)
+        print(f"Size{x.shape[0]:>56}")
+        print(f"{'Bankrupt':<41}{int(x.shape[0]*fb/100):10d} / {fb:>5.2f}%")
+        print(f"{'IPO':<41}{int(x.shape[0]*fi/100):10d} / {fi:>5.2f}%")
+        print(f"{'Acquisition':<41}{int(x.shape[0]*fa/100):10d} / {fa:>5.2f}%")
+        print(f"{'Private':<41}{int(x.shape[0]*fp/100):10d} / {fp:>5.2f}%")
+        print(f"{'':.^60}")
+        print(f"{'Good valuation data':<41}{int(x.shape[0]*d):10d} / {d*100:>5.2f}%")
+        print(f"{'':=^60}\n")
     return c, d
 
 
 def find_case(data, use_k, bankhand):
     cases = zeros(data.shape[0])
     data = data.reset_index()
-    for index, row in tqdm(data.iterrows(), total=data.shape[0], desc='Finding observation cases'):
+    for index, row in tqdm(data.iterrows(), total=data.shape[0], ncols=60, bar_format='Analyzing cases...{percentage:>41.2f}%'):
         if (row["exit_type"] in [1, 2, 6]) and (row["exit_date"] != -99) and (row["return_usd"] > 0):
             cases[index] = 1
         elif (row["exit_type"] in [1, 2, 5, 6]) and (row["exit_date"] != -99):
