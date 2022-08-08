@@ -2,6 +2,7 @@ import pandas as pd
 import numpy as np
 from tqdm import tqdm
 from numpy import exp, log, array, floor, zeros, abs, int64, float64, sqrt
+from pickle import dump
 
 
 def transform_params(gamma, delta, sigma, k, a, b, pi_err, mask, inv=False):
@@ -55,7 +56,7 @@ def display_return_stats(x, disp=True):
         fp = sum(x["exit_type"] == 4) / x.shape[0] * 100
         
         print('-'*60)
-        print(f"Size{x.shape[0]:>56}")
+        print(f"{'Size':<40}{int(x.shape[0]):10d} / {100:>5.2f}%")
         print(f"{'Bankrupt':<41}{int(x.shape[0]*fb/100):10d} / {fb:>5.2f}%")
         print(f"{'IPO':<41}{int(x.shape[0]*fi/100):10d} / {fi:>5.2f}%")
         print(f"{'Acquisition':<41}{int(x.shape[0]*fa/100):10d} / {fa:>5.2f}%")
@@ -147,3 +148,24 @@ def print_results(results, log_mk, log_rf, disp=True):
     }, index=['value', 'sd'])
     
     return implied, params
+
+
+def save_results(results, from_date, to_date, industry, test, bootstrap, pred, index):
+    filename = 'src/results/res_'
+    if not pred:
+        filename += '_' + 'no_pred'
+    if from_date is not None:
+        filename += 'from_' + from_date[:4]
+    if to_date is not None:
+        filename += 'to_' + to_date[:4]
+    if industry is not None:
+        filename += '_' + industry.lower()
+    if test:
+        filename += '_' + 'cochrane'
+    if bootstrap:
+        filename += '_' + 'bootstrap'
+    if index:
+        filename += '_' + index
+    
+    with open(filename + '.pkl', 'wb') as file:
+        dump(results, file)
