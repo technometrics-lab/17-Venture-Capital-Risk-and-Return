@@ -124,15 +124,15 @@ def print_results(results, log_mk, log_rf, disp=True):
     elnr = gamma + mu_rf + delta * (mu_mk - mu_rf)
     sdlnr = sqrt(delta**2 * sg_mk**2 + sigma**2)
     
-    er = 400 * (exp(elnr + sdlnr**2 / 2) - 1)
-    sdr = 200 * sqrt(((er / 400 + 1) * (exp(sdlnr**2) - 1)))
+    er = (exp(elnr + sdlnr**2 / 2) - 1)
+    sdr = (er + 1) * sqrt((exp(sdlnr**2) - 1))
     
     beta = get_beta(*results.loc['value'][:3], log_mk, log_rf)
     alpha = get_alpha(*results.loc['value'][:3], log_mk, log_rf, beta)
     
     implied = pd.DataFrame({
         'E[ln R] (%)': [400 * elnr,  200 * sdlnr],
-        'E[R] (%)': [er, sdr],
+        'E[R] (%)': [400 * er, 200 * sdr],
         'alpha (%)': [400 * alpha, np.nan], 
         'beta': [beta, np.nan]
         }, index=['value', 'std'])
@@ -145,7 +145,7 @@ def print_results(results, log_mk, log_rf, disp=True):
         'a': [a, a * sda],
         'b': [b, sdb],
         'pi (%)': [100 * pi, 100 * sdpi * pi * (1 - pi)]
-    }, index=['value', 'sd'])
+    }, index=['value', 'std'])
     
     return implied, params
 

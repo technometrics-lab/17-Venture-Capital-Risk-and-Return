@@ -45,20 +45,20 @@ def run_bootstrap(x, xc, params0, n_bstrap, test, benchmark):
         idx = np.sort(np.random.choice(x.index, replace=False, size=int(x.shape[0] * frac)))
         x_i = x.iloc[idx,:]
         start_date, end_date = get_dates(x_i, False)
-        print(f'Bootsrap iteration{i:>42}')
+        print(f'Bootsrap iteration{i+1:>39}/{n_bstrap}')
         print(f"Start date{start_date.strftime('%Y-%m-%d'):>50}")
         print(f"End date{end_date.strftime('%Y-%m-%d'):>52}")
         
         xc_i = xc[x_i.index].copy()
         x_i = x_i.reset_index(drop=True).copy()
         
-        bootstrap_res = start_opti(x_i, xc_i, params0, test=test, maxiter=20, benchmark=benchmark)
+        bootstrap_res = start_opti(x_i, xc_i, params0, test=test, maxiter=30, benchmark=benchmark)
         res[i] = {'start': start_date, 'end': end_date, 'res': bootstrap_res}
     return res
 
 
 def main(filepath, params0=None, from_date=None, to_date=None, industries=None, test=False, bootstrap=False, 
-         pred=True, use_k=True, use_bkp=True, n_bstrap=100, maxiter=30, benchmark='^SP500TR'):
+         pred=True, use_k=True, use_bkp=True, n_bstrap=20, maxiter=30, benchmark='^SP500TR'):
     
     if params0 is None:
         gamma0 = 0.01
@@ -117,7 +117,7 @@ if __name__ == "__main__":
     benchmark = '^SP500TR'
     # main('data.csv', from_date='2010-01-01', benchmark=benchmark)
     # main('data.csv', from_date='2010-01-01', industries=['Tech', 'Retail', 'Health', 'Other'], benchmark=benchmark)
-    main('data.csv', from_date='2010-01-01', bootstrap=True, benchmark=benchmark)
+    # main('data.csv', from_date='2010-01-01', bootstrap=True, benchmark=benchmark)
     # main('data.csv', from_date='2010-01-01', industries=['Tech', 'Retail', 'Health', 'Other'], bootstrap=True, n_bstrap=10, benchmark=benchmark)
     
     benchmark = '^IXIC'

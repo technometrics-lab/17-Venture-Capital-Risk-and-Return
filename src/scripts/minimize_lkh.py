@@ -37,7 +37,7 @@ class Model:
         if verbose:
             print("{0:<5}{1:<10}{2:<10}{3:<10}{4:<10}{5:<10}{6:<10}{7:<10}{8:<10}"
                 .format("iter", "gamma", "delta", "sigma", "k", "a", "b", "pi_err", "lkh"))
-        res = minimize(self.model_likelyhood, tpar0, options={'maxiter': maxiter}, args=({'nfeval':0}))
+        res = minimize(self.model_likelyhood, tpar0, options={'maxiter': maxiter}, args=({'nfeval':1}))
         
         if isinstance(res.hess_inv, LbfgsInvHessProduct):
             resx, resh = res.x, res.hess_inv.todense()

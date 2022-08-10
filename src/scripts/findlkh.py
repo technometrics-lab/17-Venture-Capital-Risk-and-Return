@@ -75,7 +75,7 @@ def find_likelyhood(tpars, x, xc, logrf, logmk, minage, c, d, logv, mask,
     lk = - lk + penalty
     
     if info is not None:
-        if info['nfeval'] % 1 == 0:
+        if (info['nfeval']-1) % 8 == 0:
             niter = info['nfeval']
             print((f'{niter:<5}{gamma:<10.4f}{delta:<10.4f}{sigma:<10.4f}{k:<10.4f}'
                 f'{a:<10.4f}{b:<10.4f}{pi_err:<10.4f}{lk:<10.4f}'))

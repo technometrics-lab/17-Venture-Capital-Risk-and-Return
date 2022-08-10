@@ -2,7 +2,7 @@ import numpy as np
 import pandas as pd
 
 from scripts.market_api import get_yfinance_time_series, get_fred_time_series
-from scripts.utils import *
+from scripts.utils import to_decimal_date
 
 
 def load_index_data(ticker: str = None, start=None, end=None, freq: str = None, test=False, prefix=''):
