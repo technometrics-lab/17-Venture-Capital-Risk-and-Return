@@ -6,6 +6,4 @@ data/crunchbase/
 ../.DS_Store
 /src/vcanalysis.egg-info/
 src/scripts/__pycache__/*
-src/notebooks/figures/
-src/notebooks/figures/*
 Python.pkl
