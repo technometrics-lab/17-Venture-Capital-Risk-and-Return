@@ -14,11 +14,11 @@ def sim(gamma, delta, sigma, k, a, b, c, d, pi_err, start, logrf, logmk, logv, s
     T = sample_size - start - 1
     N = logv.shape[0]
         
-    prob_ipo_obs = np.zeros((T, N))
-    prob_ipo_hid = np.zeros(T)
-    prob_bkp_obs = np.zeros(T)
-    prob_bkp_hid = np.zeros(T)
-    prob_pvt = np.zeros(T)
+    prob_exit_good_data = np.zeros((T, N))
+    prob_exit_bad_data = np.zeros(T)
+    prob_closed_good_data = np.zeros(T)
+    prob_closed_bad_data = np.zeros(T)
+    prob_private = np.zeros(T)
     prob_lnV = np.zeros((N, N))
 
     val_min = logv[0]
@@ -38,7 +38,7 @@ def sim(gamma, delta, sigma, k, a, b, c, d, pi_err, start, logrf, logmk, logv, s
     min_idx = np.argmin(np.abs(logv), axis=0)
     prob_val = np.zeros(N)
     prob_val[min_idx] = 1e4
-    prob_private = prob_val
+    prob_pvt = prob_val
     prob_exit = pipo_func(logv)
 
     dlogV = np.arange(val_min - val_max, val_max - val_min + 2*val_step, val_step)
@@ -60,22 +60,22 @@ def sim(gamma, delta, sigma, k, a, b, c, d, pi_err, start, logrf, logmk, logv, s
                 else:
                     prob_lnV[:, i] = s
 
-        prob_val = prob_lnV @ prob_private
+        prob_val = prob_lnV @ prob_pvt
         phadip = prob_val * prob_exit
         phadbk = prob_val * (1 - prob_exit) * prob_bank
-        prob_private = prob_val * (1 - prob_exit) * (1 - prob_bank)
+        prob_pvt = prob_val * (1 - prob_exit) * (1 - prob_bank)
 
-        prob_ipo_obs[t, :] = (1 - pi_err) * d * phadip + pi_err * d * phadip.mean()
-        prob_ipo_hid[t] = ((1 - d) * phadip).sum()
-        prob_bkp_obs[t] = (c * phadbk).sum()
-        prob_bkp_hid[t] = ((1 - c) * phadbk).sum()
-        prob_pvt[t] = prob_private.sum()
+        prob_exit_good_data[t, :] = (1 - pi_err) * d * phadip + pi_err * d * phadip.mean()
+        prob_exit_bad_data[t] = ((1 - d) * phadip).sum()
+        prob_closed_good_data[t] = (c * phadbk).sum()
+        prob_closed_bad_data[t] = ((1 - c) * phadbk).sum()
+        prob_private[t] = prob_pvt.sum()
 
-    prob_ipo_obs /= 1e4
-    prob_bkp_hid /= 1e4
-    prob_bkp_obs /= 1e4
-    prob_ipo_hid /= 1e4
-    prob_pvt /= 1e4
-    # probsum = prob_pvt[-1] + prob_ipo_obs.sum() + prob_ipo_hid.sum() + prob_bkp_obs.sum() + prob_bkp_hid.sum()
+    prob_exit_good_data /= 1e4
+    prob_closed_bad_data /= 1e4
+    prob_closed_good_data /= 1e4
+    prob_exit_bad_data /= 1e4
+    prob_private /= 1e4
+    # probsum = prob_private[-1] + prob_exit_good_data.sum() + prob_exit_bad_data.sum() + prob_closed_good_data.sum() + prob_closed_bad_data.sum()
     # assert abs(probsum - 1) < 1e-6, f"sim3 ERROR: Probabilities sum to more or less than one ({probsum:.4f})"
-    return prob_pvt, prob_ipo_obs, prob_ipo_hid, prob_bkp_obs, prob_bkp_hid
+    return prob_private, prob_exit_good_data, prob_exit_bad_data, prob_closed_good_data, prob_closed_bad_data

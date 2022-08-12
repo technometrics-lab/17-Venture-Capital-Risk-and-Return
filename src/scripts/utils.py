@@ -151,13 +151,13 @@ def print_results(results, log_mk, log_rf, disp=True):
 
 
 def save_results(results, from_date, to_date, industry, test, bootstrap, pred, index):
-    filename = 'src/results/res_'
+    filename = 'src/results/res_security'
     if not pred:
         filename += '_' + 'no_pred'
     if from_date is not None:
-        filename += 'from_' + from_date[:4]
+        filename += '_from_' + from_date[:4]
     if to_date is not None:
-        filename += 'to_' + to_date[:4]
+        filename += '_to_' + to_date[:4]
     if industry is not None:
         filename += '_' + industry.lower()
     if test:

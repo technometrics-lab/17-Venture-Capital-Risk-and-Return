@@ -66,7 +66,7 @@ def main(filepath, params0=None, from_date=None, to_date=None, industries=None, 
         sigma0 = 0.9
         k0 = 0.1
         a0 = 1
-        b0 = 8
+        b0 = 10
         pi0 = 0.1
         
         params0 = [gamma0, delta0, sigma0, k0, a0, b0, pi0]
@@ -114,24 +114,31 @@ def main(filepath, params0=None, from_date=None, to_date=None, industries=None, 
 
 
 if __name__ == "__main__":
-    benchmark = '^SP500TR'
+    # benchmark = '^SP500TR'
     # main('data.csv', from_date='2010-01-01', benchmark=benchmark)
     # main('data.csv', from_date='2010-01-01', industries=['Tech', 'Retail', 'Health', 'Other'], benchmark=benchmark)
     # main('data.csv', from_date='2010-01-01', bootstrap=True, benchmark=benchmark)
-    # main('data.csv', from_date='2010-01-01', industries=['Tech', 'Retail', 'Health', 'Other'], bootstrap=True, n_bstrap=10, benchmark=benchmark)
+
+    # benchmark = '^IXIC'
+    # main('data.csv', from_date='2010-01-01', benchmark=benchmark)
+    # main('data.csv', from_date='2010-01-01', industries=['Tech', 'Retail', 'Health', 'Other'], benchmark=benchmark)
+    # main('data.csv', from_date='2010-01-01', bootstrap=True, benchmark=benchmark)
+
+    # benchmark = '^RUT'
+    # main('data.csv', from_date='2010-01-01', benchmark=benchmark)
+    # main('data.csv', from_date='2010-01-01', industries=['Tech', 'Retail', 'Health', 'Other'], benchmark=benchmark)
+    # main('data.csv', from_date='2010-01-01', bootstrap=True, benchmark=benchmark)
     
+    benchmark = '^SP500TR'
+    main('security_data.csv', from_date='2010-01-01', benchmark=benchmark)
+    main('security_data.csv', from_date='2010-01-01', bootstrap=True, benchmark=benchmark)
     benchmark = '^IXIC'
-    # main('data.csv', from_date='2010-01-01', benchmark=benchmark)
-    # main('data.csv', from_date='2010-01-01', industries=['Tech', 'Retail', 'Health', 'Other'], benchmark=benchmark)
-    main('data.csv', from_date='2010-01-01', bootstrap=True, benchmark=benchmark)
-    # main('data.csv', from_date='2010-01-01', industries=['Tech', 'Retail', 'Health', 'Other'], bootstrap=True, n_bstrap=10, benchmark=benchmark)
-    
+    main('security_data.csv', from_date='2010-01-01', benchmark=benchmark)
+    main('security_data.csv', from_date='2010-01-01', bootstrap=True, benchmark=benchmark)
     benchmark = '^RUT'
-    # main('data.csv', from_date='2010-01-01', benchmark=benchmark)
-    # main('data.csv', from_date='2010-01-01', industries=['Tech', 'Retail', 'Health', 'Other'], benchmark=benchmark)
-    main('data.csv', from_date='2010-01-01', bootstrap=True, benchmark=benchmark)
-    # main('data.csv', from_date='2010-01-01', industries=['Tech', 'Retail', 'Health', 'Other'], bootstrap=True, n_bstrap=10, benchmark=benchmark)
-        
+    main('security_data.csv', from_date='2010-01-01', benchmark=benchmark)
+    main('security_data.csv', from_date='2010-01-01', bootstrap=True, benchmark=benchmark)
+   
 
 ###### TODO #######
 # run simulations for all datasets: predicitons, cochrane, no pred, bootstrap, 
