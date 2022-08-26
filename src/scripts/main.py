@@ -114,20 +114,20 @@ def main(filepath, params0=None, from_date=None, to_date=None, industries=None, 
 
 
 if __name__ == "__main__":
-    # benchmark = '^SP500TR'
-    # main('data.csv', from_date='2010-01-01', benchmark=benchmark)
-    # main('data.csv', from_date='2010-01-01', industries=['Tech', 'Retail', 'Health', 'Other'], benchmark=benchmark)
-    # main('data.csv', from_date='2010-01-01', bootstrap=True, benchmark=benchmark)
+    benchmark = '^SP500TR'
+    main('data.csv', from_date='2010-01-01', benchmark=benchmark)
+    main('data.csv', from_date='2010-01-01', industries=['Tech', 'Retail', 'Health', 'Other'], benchmark=benchmark)
+    main('data.csv', from_date='2010-01-01', bootstrap=True, benchmark=benchmark)
 
-    # benchmark = '^IXIC'
-    # main('data.csv', from_date='2010-01-01', benchmark=benchmark)
-    # main('data.csv', from_date='2010-01-01', industries=['Tech', 'Retail', 'Health', 'Other'], benchmark=benchmark)
-    # main('data.csv', from_date='2010-01-01', bootstrap=True, benchmark=benchmark)
+    benchmark = '^IXIC'
+    main('data.csv', from_date='2010-01-01', benchmark=benchmark)
+    main('data.csv', from_date='2010-01-01', industries=['Tech', 'Retail', 'Health', 'Other'], benchmark=benchmark)
+    main('data.csv', from_date='2010-01-01', bootstrap=True, benchmark=benchmark)
 
-    # benchmark = '^RUT'
-    # main('data.csv', from_date='2010-01-01', benchmark=benchmark)
-    # main('data.csv', from_date='2010-01-01', industries=['Tech', 'Retail', 'Health', 'Other'], benchmark=benchmark)
-    # main('data.csv', from_date='2010-01-01', bootstrap=True, benchmark=benchmark)
+    benchmark = '^RUT'
+    main('data.csv', from_date='2010-01-01', benchmark=benchmark)
+    main('data.csv', from_date='2010-01-01', industries=['Tech', 'Retail', 'Health', 'Other'], benchmark=benchmark)
+    main('data.csv', from_date='2010-01-01', bootstrap=True, benchmark=benchmark)
     
     benchmark = '^SP500TR'
     main('security_data.csv', from_date='2010-01-01', benchmark=benchmark)
