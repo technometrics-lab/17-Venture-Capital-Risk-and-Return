@@ -15,6 +15,8 @@ This thesis revisits a maximum likelihood methodology first proposed by Cochrane
 2. Run `notebooks/pmv_regression.ipynb` to train the models (are use the pre-trained ones) to complete the dataset
 3. Run `notebooks/exit_value.ipynb` to grab all available exit values for the dataset
 4. Run `notebooks/compute_returns.ipynb` to compute returns for the dataset
-5. Run `scripts/main.py` with the correct arguments to perform the MLE
+5. Run `scripts/main.py` with the correct arguments to perform the MLE. Values for T-bills and market returns are automatically fetched from APIs depending on detected start and end dates in the provided dataset and the specified ticker (such as ^SP500TR)
 
-Figures are saved in notebooks/figures and models for PMV are stored in notebooks/models
+Figures are saved in `notebooks/figures` and models for PMV are stored in notebooks/models
+
+Results are saved in `src\results` as pkl files. They contain a dictionnary with: start/end dates of the simulation, results as a pandas DataFrame with values and standard errors as rows, for all parameters. The method `print_results` from `scripts.utils.py` returns and prints inferred values for alpha, beta, E[R] and E[ln R].
