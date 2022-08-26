@@ -138,11 +138,4 @@ if __name__ == "__main__":
     benchmark = '^RUT'
     main('security_data.csv', from_date='2010-01-01', benchmark=benchmark)
     main('security_data.csv', from_date='2010-01-01', bootstrap=True, benchmark=benchmark)
-   
-
-###### TODO #######
-# run simulations for all datasets: predicitons, cochrane, no pred, bootstrap, 
-# same but run by sector
-# add missing exit values (go with 1st day market cap, fk it)
-# improve selection function
-# draw graphs of empiracal CDFs
+ 
