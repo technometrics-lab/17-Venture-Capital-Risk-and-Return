@@ -10,7 +10,7 @@ This thesis revisits a maximum likelihood methodology first proposed by Cochrane
 
 # How to
 
-0. To start from scratch, run the code in `fetch_crunchbase_data.ipynb` to get up-to-date data from Crunchbsae. An API key is required in a `.env` file
+0. To start from scratch, run the code in `fetch_crunchbase_data.ipynb` to get up-to-date data from Crunchbsae. An API key is required in a `.env` file in the root folder
 1. Run `notebooks/stylzed_facts.ipynb` to get a clean copy of the dataset and a complete analysis of the data
 2. Run `notebooks/pmv_regression.ipynb` to train the models (are use the pre-trained ones) to complete the dataset
 3. Run `notebooks/exit_value.ipynb` to grab all available exit values for the dataset
