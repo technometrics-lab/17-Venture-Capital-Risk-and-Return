@@ -46,11 +46,11 @@ def sim(gamma, delta, sigma, k, a, b, c, d, pi_err, start, logrf, logmk, logv, s
     for t in range(T):
         if start >= 0 and stockidx > 0:
             mu = gamma + logrf[start+t+1] + delta * (logmk[start+t+1] - logrf[start+t+1])
-            # distr = lognorm(scale=np.exp(mu), s=sigma)
-            # prob_lnV0 = np.diff(distr.cdf(np.exp(dlogV)))
+            distr = lognorm(scale=np.exp(mu), s=sigma)
+            prob_lnV0 = np.diff(distr.cdf(np.exp(dlogV)))
             # BAD BUT FAST:
-            prob_lnV0 = np.exp(-(dlogV - mu)**2 / (2 * sigma**2))
-            prob_lnV0 /= prob_lnV0.sum()
+            # prob_lnV0 = np.exp(-(dlogV - mu)**2 / (2 * sigma**2))
+            # prob_lnV0 /= prob_lnV0.sum()
             
             
             for i in range(N):
@@ -76,6 +76,6 @@ def sim(gamma, delta, sigma, k, a, b, c, d, pi_err, start, logrf, logmk, logv, s
     prob_closed_good_data /= 1e4
     prob_exit_bad_data /= 1e4
     prob_private /= 1e4
-    # probsum = prob_private[-1] + prob_exit_good_data.sum() + prob_exit_bad_data.sum() + prob_closed_good_data.sum() + prob_closed_bad_data.sum()
-    # assert abs(probsum - 1) < 1e-6, f"sim3 ERROR: Probabilities sum to more or less than one ({probsum:.4f})"
+    probsum = prob_private[-1] + prob_exit_good_data.sum() + prob_exit_bad_data.sum() + prob_closed_good_data.sum() + prob_closed_bad_data.sum()
+    assert abs(probsum - 1) < 1e-6, f"sim ERROR: Probabilities sum to more or less than one ({probsum:.4f})"
     return prob_private, prob_exit_good_data, prob_exit_bad_data, prob_closed_good_data, prob_closed_bad_data
