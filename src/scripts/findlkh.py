@@ -20,21 +20,16 @@ def find_likelyhood(tpars, x, xc, logrf, logmk, minage, c, d, logv, mask,
     if not mask[0]:
         if not stockidx:
             gamma = log(1 + 15 / 400) - 0.5 * sigma**2
-        elif stockidx is not None:
+        else:
             mlogrf = logrf.mean()
             mlogmk = logmk.mean()
             msigma = sigma.mean()
             gamma = (-log(exp(delta * (mlogmk - mlogrf) + 0.5 * (delta * msigma)**2 + 0.5 * sigma**2)
                           * (1 + (exp(delta * msigma**2) - 1) * (exp(-(mlogmk - mlogrf) - 0.5 * msigma**2) - 1)
                              / (exp(msigma**2) - 1))))
-        else:
-            assert False, 'find_likelyhood ERROR: trying to impose alpha = 0 for model other than SP500 or no stock.'
 
     if (log(k) <= logv.min()) | (log(k) > logv.max()):
-        print(('find_likelyhood being asked for k < min of grid or > max of grid '
-               '-- sending back huge likly. SHOULD NOT SEE THIS.'))
-        print('better to raise penalty in find_likelyhood so that the likelyhood function is continuous')
-        return np.inf
+        assert False, 'find_likelyhood ERROR k outside of value grid. Returning infinite likelihood'
 
     quarter_index = -1
     sim_params = [gamma, delta, sigma, k, a, b, c, d, pi_err, quarter_index, logrf, logmk, logv, stockidx, use_k, 0, sample_size]
@@ -109,14 +104,13 @@ def bad_return_and_date(sample_size, quarter_index, prob_ipo_hid):
 
 def good_date_bad_return(minage, start_year, quarter_index, prob_ipo_hid, exit_date):
     exit_index = math.floor((exit_date - start_year) * 4) - quarter_index - 1
-    if exit_index + 1 < minage * 4:
+    if exit_index + 1 < minage * 4: # treat dates less than minage as "on or before"
         newprob = sum(prob_ipo_hid[:int(min(minage * 4, prob_ipo_hid.shape[0]))])
     else:
         newprob = prob_ipo_hid[exit_index]
     return newprob
 
 def good_return_and_date(x, minage, logv, start_year, quarter_index, prob_ipo_obs, il, exit_date):
-    # quarter of exit with 1987:1 = 1 - start
     exit_index = math.floor((exit_date - start_year) * 4) - quarter_index - 1
     logV = log(x[il, 9])
     logVindx = np.argmin(np.abs(logV - logv))  # find nearest value gridpoint
